@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const api = axios.create({                                                                                                                                                                                                               
-  baseURL: '/api/',                                                                                                                                                                                                                      
-  headers: {                                                                                                                                                                                                                             
-    'Content-Type': 'application/json',                                                                                                                                                                                                  
-  },                                                                                                                                                                                                                                     
-}); 
+const api = axios.create({
+  baseURL: '/api/',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 // Intercepteur pour injecter le token JWT
 api.interceptors.request.use(
