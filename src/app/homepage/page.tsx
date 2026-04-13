@@ -168,9 +168,9 @@ export default function DashboardPage() {
               color="bg-secondary"
             />
             <QuickLink
-              href="/services"
+              href="/prestations"
               icon={<Briefcase size={18} />}
-              title="Services"
+              title="Prestations"
               color="bg-accent"
             />
           </div>
