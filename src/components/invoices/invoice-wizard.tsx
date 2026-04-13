@@ -6,6 +6,26 @@ import { clientService } from '@/services/client.service';
 import { serviceService } from '@/services/service.service';
 import { Client, Service } from '@/types';
 
+// Import des composants UI
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
 export function InvoiceWizard() {
   const {
     lines,
@@ -14,116 +34,134 @@ export function InvoiceWizard() {
     totals,
     selectedClientId,
     setSelectedClientId,
+    removeLine,
   } = useInvoiceWizard();
-
-  // États pour stocker les données du back
   const [clients, setClients] = useState<Client[]>([]);
   const [services, setServices] = useState<Service[]>([]);
 
-  // 1. Charger les données au montage
   useEffect(() => {
     clientService.getAll().then((res) => setClients(res.data));
     serviceService.getAll().then((res) => setServices(res.data));
   }, []);
 
   return (
-    <div className="mx-auto max-w-2xl rounded-xl border bg-white p-6 shadow-md">
-      <h2 className="mb-6 text-2xl font-bold">Nouvelle Facture</h2>
-
-      {/* 2. Client Selector */}
-      <div className="mb-6">
-        <label className="mb-2 block text-sm font-medium">
-          Sélectionner un Client
-        </label>
-        <select
-          value={selectedClientId || ''}
-          onChange={(e) => setSelectedClientId(Number(e.target.value))}
-          className="w-full rounded-md border p-2"
-        >
-          <option value="">Choisir un client...</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} - {c.company}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-4">
+    <Card className="border-border w-full max-w-4xl shadow-lg">
+      <CardHeader className="border-b">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Prestations</h3>
-          <button
-            type="button"
-            onClick={() => addLine()}
-            className="rounded-md bg-black px-3 py-1 text-sm text-white hover:opacity-80"
+          <CardTitle className="font-heading text-xl">
+            Nouvelle Facture
+          </CardTitle>
+          <Badge variant="secondary">Brouillon</Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6 pt-6">
+        {/* Sélecteur Client avec le style Input */}
+        <div className="grid gap-2">
+          <label className="text-sm font-medium">Client</label>
+          <select
+            value={selectedClientId || ''}
+            onChange={(e) => setSelectedClientId(Number(e.target.value))}
+            className="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
           >
-            + Ajouter
-          </button>
+            <option value="">Sélectionner un client...</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.company})
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* 3. Dynamic Rows */}
-        {lines.map((line, index) => (
-          <div
-            key={index}
-            className="grid grid-cols-12 items-end gap-2 border-b pb-4"
-          >
-            <div className="col-span-5">
-              <label className="text-xs text-gray-500">Service</label>
-              <select
-                className="w-full rounded border p-1 text-sm"
-                onChange={(e) => {
-                  const s = services.find(
-                    (serv) => serv.id === Number(e.target.value)
-                  );
-                  if (s) {
-                    // Ici on met à jour l'ID ET le prix unitaire
-                    updateLine(index, 'service_id', s.id);
-                    updateLine(index, 'unit_price', s.hourly_rate);
-                  }
-                }}
-              >
-                <option value="">Sélectionner...</option>
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Table des prestations avec les composants UI */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[40%]">Service</TableHead>
+                <TableHead>Heures</TableHead>
+                <TableHead>Prix Unit.</TableHead>
+                <TableHead className="text-right">Total HT</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lines.map((line, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <select
+                      className="w-full bg-transparent text-sm outline-none"
+                      value={line.service_id || ''}
+                      onChange={(e) => {
+                        const s = services.find(
+                          (serv) => serv.id === Number(e.target.value)
+                        );
+                        if (s) {
+                          updateLine(index, 'service_id', s.id);
+                          updateLine(index, 'unit_price', s.hourly_rate);
+                        }
+                      }}
+                    >
+                      <option value="">Choisir...</option>
+                      {services.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      className="h-8 w-20"
+                      value={line.quantity}
+                      onChange={(e) =>
+                        updateLine(index, 'quantity', e.target.value)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="text-sm">{line.unit_price} €</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {line.total} €
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => removeLine(index)}
+                      className="text-destructive"
+                    >
+                      ✕
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-            <div className="col-span-2">
-              <label className="text-xs text-gray-500">Heures</label>
-              <input
-                type="number"
-                value={line.quantity}
-                onChange={(e) => updateLine(index, 'quantity', e.target.value)}
-                className="w-full rounded border p-1 text-sm"
-              />
-            </div>
+        <Button variant="outline" size="sm" onClick={() => addLine()}>
+          + Ajouter une prestation
+        </Button>
+      </CardContent>
 
-            <div className="col-span-3 text-right">
-              <label className="block text-xs text-gray-500">Total</label>
-              <span className="text-sm font-medium">{line.total} €</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 4. Final Summary */}
-      <div className="mt-8 space-y-2 border-t pt-4">
-        <div className="flex justify-between text-sm">
+      <CardFooter className="bg-muted/30 flex flex-col items-end gap-2 border-t py-6">
+        <div className="text-muted-foreground flex w-full max-w-[250px] justify-between text-sm">
           <span>Total HT</span>
           <span>{totals.total_ht} €</span>
         </div>
-        <div className="flex justify-between text-sm text-gray-600">
+        <div className="text-muted-foreground flex w-full max-w-[250px] justify-between text-sm">
           <span>TVA (20%)</span>
           <span>{totals.tva_amount} €</span>
         </div>
-        <div className="flex justify-between border-t pt-2 text-lg font-bold">
+        <div className="text-primary flex w-full max-w-[250px] justify-between pt-2 text-lg font-bold">
           <span>Total TTC</span>
           <span>{totals.total_ttc} €</span>
         </div>
-      </div>
-    </div>
+        <Button className="mt-4 w-full max-w-[250px]">
+          Enregistrer la facture
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
