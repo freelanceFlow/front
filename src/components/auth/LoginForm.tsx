@@ -1,22 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { authService } from "@/services/auth.service";
-import { storageService } from "@/services/storage.service";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { authService } from '@/services/auth.service';
+import { storageService } from '@/services/storage.service';
+import { AxiosError } from 'axios';
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginInput = z.infer<typeof loginSchema>;
+
+interface ErrorResponse {
+  message: string;
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -46,11 +51,12 @@ export function LoginForm() {
         if (response.data.user) {
           storageService.setUser(response.data.user);
         }
-        router.push("/homepage");
+        router.push('/homepage');
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid email or password");
+    } catch (err: unknown) {
+      const error = err as AxiosError<ErrorResponse>;
+      setError(error.response?.data?.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +65,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
           {error}
         </div>
       )}
@@ -67,33 +73,33 @@ export function LoginForm() {
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
-          {...register("email")}
+          {...register('email')}
           type="email"
           id="email"
           placeholder="you@example.com"
           disabled={isLoading}
         />
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <p className="text-destructive text-sm">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input
-          {...register("password")}
+          {...register('password')}
           type="password"
           id="password"
           placeholder="••••••"
           disabled={isLoading}
         />
         {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <p className="text-destructive text-sm">{errors.password.message}</p>
         )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Signing in..." : "Log In"}
+        {isLoading ? 'Signing in...' : 'Log In'}
       </Button>
     </form>
   );

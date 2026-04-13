@@ -33,5 +33,5 @@ export const storageService = {
 
   isAuthenticated(): boolean {
     return !!this.getToken();
-  }
+  },
 };
