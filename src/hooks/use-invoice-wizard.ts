@@ -1,5 +1,6 @@
 import { useState, useMemo, createContext, useContext } from 'react';
 import { Service, InvoiceLine } from '@/types';
+import { invoiceService } from '@/services/invoice.service';
 import { useRouter } from 'next/navigation';
 
 interface InvoiceWizardState {
@@ -73,25 +74,20 @@ export function useInvoiceWizardProvider() {
   const saveInvoice = async () => {
     setIsSubmitting(true);
 
-    // Simulation du JSON final à envoyer au backend
-    const payload = {
-      client_id: selectedClientId,
-      date: new Date().toISOString(),
-      status: 'draft',
-      lines: lines,
-      totals: {
+    try {
+      await invoiceService.create({
+        client_id: selectedClientId!,
+        status: 'draft',
         total_ht: totals.ht.toFixed(2),
-        tva_amount: totals.tva.toFixed(2),
+        tva_rate: '20',
         total_ttc: totals.ttc.toFixed(2),
-      },
-    };
-
-    console.log('Envoi au backend :', payload);
-
-    setTimeout(() => {
+        InvoiceLines: lines as InvoiceLine[],
+      });
+      router.push('/invoices');
+    } catch (err) {
+      console.error('Erreur lors de la création de la facture:', err);
       setIsSubmitting(false);
-      router.push('/invoices'); // Retour au dashboard après succès
-    }, 1500);
+    }
   };
 
   return {
