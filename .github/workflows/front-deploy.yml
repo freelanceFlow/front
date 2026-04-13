@@ -3,6 +3,8 @@ name: Deploy
 on:
   release:
     types: [published]
+  workflow_dispatch:
+  
 
 jobs:
   lint-and-format:
