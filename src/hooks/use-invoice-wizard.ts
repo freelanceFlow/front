@@ -81,7 +81,7 @@ export function useInvoiceWizardProvider() {
         total_ht: totals.ht.toFixed(2),
         tva_rate: '20',
         total_ttc: totals.ttc.toFixed(2),
-        InvoiceLines: lines as InvoiceLine[],
+        lines: lines as InvoiceLine[],
       });
       router.push('/invoices');
     } catch (err) {
