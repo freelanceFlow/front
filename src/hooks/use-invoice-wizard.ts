@@ -1,8 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, createContext, useContext } from 'react';
 import { Service, InvoiceLine } from '@/types';
 import { useRouter } from 'next/navigation';
 
-export function useInvoiceWizard() {
+interface InvoiceWizardState {
+  step: number;
+  nextStep: () => void;
+  prevStep: () => void;
+  selectedClientId: number | null;
+  setSelectedClientId: (id: number | null) => void;
+  lines: Partial<InvoiceLine>[];
+  addLine: (service?: Service) => void;
+  updateLine: (index: number, field: keyof InvoiceLine, value: string | number) => void;
+  removeLine: (index: number) => void;
+  totals: { ht: number; tva: number; ttc: number };
+  isSubmitting: boolean;
+  saveInvoice: () => Promise<void>;
+}
+
+const InvoiceWizardContext = createContext<InvoiceWizardState | null>(null);
+
+export function useInvoiceWizardProvider() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,4 +103,14 @@ export function useInvoiceWizard() {
     isSubmitting,
     saveInvoice,
   };
+}
+
+export { InvoiceWizardContext };
+
+export function useInvoiceWizard() {
+  const context = useContext(InvoiceWizardContext);
+  if (!context) {
+    throw new Error('useInvoiceWizard must be used within an InvoiceWizardProvider');
+  }
+  return context;
 }

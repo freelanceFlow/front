@@ -71,9 +71,14 @@ export default function InvoicesPage() {
   // 3. Téléchargement PDF
   const downloadPdf = async (id: number) => {
     try {
-      // On utilise l'URL de ton API (assure-toi que ton backend gère cette route)
-      const pdfUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/invoices/${id}/pdf`;
-      window.open(pdfUrl, '_blank');
+      const response = await invoiceService.generatePDF(id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `facture-${id}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
     } catch {
       alert('Erreur lors de la génération du PDF.');
     }
