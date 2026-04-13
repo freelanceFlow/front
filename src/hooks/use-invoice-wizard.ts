@@ -10,7 +10,11 @@ interface InvoiceWizardState {
   setSelectedClientId: (id: number | null) => void;
   lines: Partial<InvoiceLine>[];
   addLine: (service?: Service) => void;
-  updateLine: (index: number, field: keyof InvoiceLine, value: string | number) => void;
+  updateLine: (
+    index: number,
+    field: keyof InvoiceLine,
+    value: string | number
+  ) => void;
   removeLine: (index: number) => void;
   totals: { ht: number; tva: number; ttc: number };
   isSubmitting: boolean;
@@ -110,7 +114,9 @@ export { InvoiceWizardContext };
 export function useInvoiceWizard() {
   const context = useContext(InvoiceWizardContext);
   if (!context) {
-    throw new Error('useInvoiceWizard must be used within an InvoiceWizardProvider');
+    throw new Error(
+      'useInvoiceWizard must be used within an InvoiceWizardProvider'
+    );
   }
   return context;
 }
