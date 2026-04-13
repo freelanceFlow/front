@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authService } from "@/services/auth.service";
+import { storageService } from "@/services/storage.service";
 
 const registerSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  address: z.string().min(5, "Address must be at least 5 characters"),
+  adress: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -23,7 +26,9 @@ const registerSchema = z.object({
 type RegisterInput = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -31,40 +36,74 @@ export function RegisterForm() {
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      adress: "",
+    },
   });
 
   const onSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
-    console.log("Register data:", data);
-    setTimeout(() => setIsLoading(false), 1000);
+    setError(null);
+
+    try {
+      const { confirmPassword, ...registerData } = data;
+      
+      await authService.register(registerData);
+      
+      const loginResponse = await authService.login({
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (loginResponse.data.token) {
+        storageService.setToken(loginResponse.data.token);
+        if (loginResponse.data.user) {
+          storageService.setUser(loginResponse.data.user);
+        }
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred during registration");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {error && (
+        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
+          <Label htmlFor="first_name">First Name</Label>
           <Input
-            {...register("firstName")}
+            {...register("first_name")}
             type="text"
-            id="firstName"
+            id="first_name"
             placeholder="John"
+            disabled={isLoading}
           />
-          {errors.firstName && (
-            <p className="text-sm text-destructive">{errors.firstName.message}</p>
+          {errors.first_name && (
+            <p className="text-sm text-destructive">{errors.first_name.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
+          <Label htmlFor="last_name">Last Name</Label>
           <Input
-            {...register("lastName")}
+            {...register("last_name")}
             type="text"
-            id="lastName"
+            id="last_name"
             placeholder="Doe"
+            disabled={isLoading}
           />
-          {errors.lastName && (
-            <p className="text-sm text-destructive">{errors.lastName.message}</p>
+          {errors.last_name && (
+            <p className="text-sm text-destructive">{errors.last_name.message}</p>
           )}
         </div>
       </div>
@@ -76,6 +115,7 @@ export function RegisterForm() {
           type="email"
           id="email"
           placeholder="you@example.com"
+          disabled={isLoading}
         />
         {errors.email && (
           <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -83,15 +123,16 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="adress">Address (Optional)</Label>
         <Input
-          {...register("address")}
+          {...register("adress")}
           type="text"
-          id="address"
+          id="adress"
           placeholder="123 Main St, City, Country"
+          disabled={isLoading}
         />
-        {errors.address && (
-          <p className="text-sm text-destructive">{errors.address.message}</p>
+        {errors.adress && (
+          <p className="text-sm text-destructive">{errors.adress.message}</p>
         )}
       </div>
 
@@ -102,6 +143,7 @@ export function RegisterForm() {
           type="password"
           id="password"
           placeholder="••••••"
+          disabled={isLoading}
         />
         {errors.password && (
           <p className="text-sm text-destructive">{errors.password.message}</p>
@@ -115,6 +157,7 @@ export function RegisterForm() {
           type="password"
           id="confirmPassword"
           placeholder="••••••"
+          disabled={isLoading}
         />
         {errors.confirmPassword && (
           <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
