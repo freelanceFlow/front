@@ -34,7 +34,7 @@ export default function RootLayout({
         )}
       >
         <Sidebar />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </body>
