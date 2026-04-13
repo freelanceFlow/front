@@ -1,24 +1,21 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Inter } from 'next/font/google';
-import './globals.css';
-import { cn } from '@/lib/utils';
-import { Sidebar } from '@/components/shared/sidebar';
+import type { Metadata } from "next";
+import "./globals.css";
+import { cn } from "@/lib/utils";
+import { Sidebar } from "@/components/shared/sidebar";
+import { DM_Sans, JetBrains_Mono } from "next/font/google";
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
+const fontSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
 });
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: 'FreelanceFlow',
-  description: 'Gérez votre activité freelance sereinement',
+  title: "FreelanceFlow",
+  description: "Gérez votre activité freelance sereinement",
 };
 
 export default function RootLayout({
@@ -29,18 +26,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(
-        'h-full',
-        'antialiased',
-        geistSans.variable,
-        geistMono.variable,
-        'font-sans',
-        inter.variable
-      )}
+      className={cn("h-full", fontSans.variable, fontMono.variable)}
     >
-      <body className="bg-background text-foreground flex min-h-screen">
+      <body className={cn("bg-background text-foreground flex min-h-screen antialiased")}>
         <Sidebar />
-
         <main className="flex-1 overflow-y-auto p-6 lg:p-10">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
