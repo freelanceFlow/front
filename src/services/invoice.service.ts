@@ -5,7 +5,9 @@ export const invoiceService = {
   getAll: () => api.get<Invoice[]>('/invoices'),
   getOne: (id: number) => api.get<Invoice>(`/invoices/${id}`),
   create: (data: Partial<Invoice>) => api.post<Invoice>('/invoices', data),
-  update: (id: number, data: Partial<Invoice>) => api.put<Invoice>(`/invoices/${id}`, data),
+  update: (id: number, data: Partial<Invoice>) =>
+    api.put<Invoice>(`/invoices/${id}`, data),
   delete: (id: number) => api.delete(`/invoices/${id}`),
-  generatePDF: (id: number) => api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
+  generatePDF: (id: number) =>
+    api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
 };

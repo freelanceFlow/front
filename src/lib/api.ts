@@ -27,7 +27,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Optionnel : Rediriger vers login ou vider le localStorage
-      console.error("Session expirée ou non autorisée");
+      console.error('Session expirée ou non autorisée');
     }
     return Promise.reject(error);
   }
