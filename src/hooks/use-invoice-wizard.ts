@@ -48,15 +48,17 @@ export function useInvoiceWizardProvider() {
     field: keyof InvoiceLine,
     value: string | number
   ) => {
-    const newLines = [...lines];
-    newLines[index] = { ...newLines[index], [field]: value };
+    setLines((prev) => {
+      const newLines = [...prev];
+      newLines[index] = { ...newLines[index], [field]: value };
 
-    if (field === 'quantity' || field === 'unit_price') {
-      const qte = parseFloat(newLines[index].quantity?.toString() || '0');
-      const price = parseFloat(newLines[index].unit_price?.toString() || '0');
-      newLines[index].total = (qte * price).toFixed(2);
-    }
-    setLines(newLines);
+      if (field === 'quantity' || field === 'unit_price') {
+        const qte = parseFloat(newLines[index].quantity?.toString() || '0');
+        const price = parseFloat(newLines[index].unit_price?.toString() || '0');
+        newLines[index].total = (qte * price).toFixed(2);
+      }
+      return newLines;
+    });
   };
 
   const totals = useMemo(() => {
