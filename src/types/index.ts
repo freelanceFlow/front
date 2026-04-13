@@ -53,4 +53,5 @@ export interface Invoice {
   created_at: string;
   Client?: Client;
   InvoiceLines?: InvoiceLine[];
+  lines?: Partial<InvoiceLine>[];
 }
