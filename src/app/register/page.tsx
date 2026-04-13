@@ -1,29 +1,29 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Login | Freelance Flow",
-  description: "Login to your account",
+  title: "Register | Freelance Flow",
+  description: "Create a new account",
 };
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl">FREEL</CardTitle>
+          <CardTitle className="text-3xl">Create an Account</CardTitle>
           <CardDescription>
-            Log in to your account to continue
+            Join us to start managing your invoices
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm />
+          <RegisterForm />
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline font-medium">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline font-medium">
+              Log in
             </Link>
           </p>
         </CardContent>
@@ -31,4 +31,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
