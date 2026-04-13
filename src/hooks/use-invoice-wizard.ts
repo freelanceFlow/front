@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Service, InvoiceLine } from '@/types';
+import { Service, InvoiceLine, Invoice } from '@/types';
 import { useRouter } from 'next/navigation';
+import { invoiceService } from '@/services/invoice.service';
+
+export type InvoiceWizardReturn = ReturnType<typeof useInvoiceWizard>;
 
 export function useInvoiceWizard() {
   const router = useRouter();
@@ -14,7 +17,7 @@ export function useInvoiceWizard() {
 
   const addLine = (service?: Service) => {
     const newLine: Partial<InvoiceLine> = {
-      service_id: service?.id || 0,
+      service_id: service?.id || undefined,
       quantity: '1',
       unit_price: service?.hourly_rate || '0',
       total: service?.hourly_rate || '0',
@@ -48,27 +51,40 @@ export function useInvoiceWizard() {
   }, [lines]);
 
   const saveInvoice = async () => {
+    if (!selectedClientId || lines.length === 0) {
+      alert('Veuillez sélectionner un client et au moins une prestation.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulation du JSON final à envoyer au backend
+    // On utilise "any" ici pour le payload pour éviter les erreurs de noms de propriétés
+    // (comme 'date' vs 'invoice_date') tout en envoyant les bonnes données au service
     const payload = {
       client_id: selectedClientId,
-      date: new Date().toISOString(),
-      status: 'draft',
-      lines: lines,
-      totals: {
-        total_ht: totals.ht.toFixed(2),
-        tva_amount: totals.tva.toFixed(2),
-        total_ttc: totals.ttc.toFixed(2),
-      },
+      issued_at: new Date().toISOString(),
+      status: 'draft' as Invoice['status'],
+      total_ht: totals.ht.toFixed(2),
+      total_ttc: totals.ttc.toFixed(2),
+      lines: lines.map((line) => ({
+        service_id: Number(line.service_id),
+        quantity: line.quantity?.toString() || '0',
+        unit_price: line.unit_price?.toString() || '0',
+        total: line.total?.toString() || '0',
+      })),
     };
 
-    console.log('Envoi au backend :', payload);
-
-    setTimeout(() => {
+    try {
+      // On passe le payload typé en "any" au service qui s'occupera de l'envoi
+      await invoiceService.create(payload as Partial<Invoice>);
+      router.push('/invoices');
+      router.refresh();
+    } catch (error) {
+      console.error("Erreur lors de l'envoi :", error);
+      alert("Erreur lors de l'enregistrement en base de données.");
+    } finally {
       setIsSubmitting(false);
-      router.push('/invoices'); // Retour au dashboard après succès
-    }, 1500);
+    }
   };
 
   return {

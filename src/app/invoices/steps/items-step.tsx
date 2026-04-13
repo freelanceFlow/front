@@ -1,11 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useInvoiceWizard } from '@/hooks/use-invoice-wizard';
 import { serviceService } from '@/services/service.service';
-import { Service } from '@/types';
-
-// UI Components
+import { Service, InvoiceLine } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,9 +15,22 @@ import {
 } from '@/components/ui/table';
 import { Trash2, Plus, Calculator } from 'lucide-react';
 
-export function ItemsStep() {
-  const { lines, addLine, updateLine, removeLine, totals } = useInvoiceWizard();
+interface ItemsStepProps {
+  wizard: {
+    lines: Partial<InvoiceLine>[];
+    addLine: (service?: Service) => void;
+    updateLine: (
+      index: number,
+      field: keyof InvoiceLine,
+      value: string | number
+    ) => void;
+    removeLine: (index: number) => void;
+    totals: { ht: number; tva: number; ttc: number };
+  };
+}
 
+export function ItemsStep({ wizard }: ItemsStepProps) {
+  const { lines, addLine, updateLine, removeLine, totals } = wizard;
   const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
@@ -60,8 +70,7 @@ export function ItemsStep() {
                   colSpan={5}
                   className="text-muted-foreground h-24 text-center italic"
                 >
-                  Aucune prestation ajoutée. Cliquez sur le bouton &quot;+&quot;
-                  pour commencer.
+                  Aucune prestation ajoutée.
                 </TableCell>
               </TableRow>
             ) : (
@@ -70,10 +79,12 @@ export function ItemsStep() {
                   <TableCell>
                     <select
                       className="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
-                      value={line.service_id || ''}
+                      // CORRECTION CRUCIALE : toString() pour matcher la value des options
+                      value={line.service_id?.toString() || ''}
                       onChange={(e) => {
+                        const val = e.target.value;
                         const s = services.find(
-                          (serv) => serv.id === Number(e.target.value)
+                          (serv) => serv.id === Number(val)
                         );
                         if (s) {
                           updateLine(index, 'service_id', s.id);
@@ -83,7 +94,7 @@ export function ItemsStep() {
                     >
                       <option value="">Sélectionner un service...</option>
                       {services.map((s) => (
-                        <option key={s.id} value={s.id}>
+                        <option key={s.id} value={s.id.toString()}>
                           {s.label} ({s.hourly_rate}€/h)
                         </option>
                       ))}
@@ -123,7 +134,6 @@ export function ItemsStep() {
         </Table>
       </div>
 
-      {/* Mini-récapitulatif interne à l'étape */}
       <div className="flex justify-end pt-4">
         <div className="bg-muted/30 border-border/50 min-w-[200px] rounded-lg border p-4">
           <div className="text-muted-foreground mb-2 flex items-center gap-2">
@@ -134,7 +144,7 @@ export function ItemsStep() {
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-muted-foreground text-sm">Total HT :</span>
-            <span className="text-xl font-bold">{totals.ht} €</span>
+            <span className="text-xl font-bold">{totals.ht.toFixed(2)} €</span>
           </div>
         </div>
       </div>

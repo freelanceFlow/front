@@ -1,11 +1,11 @@
-import { useInvoiceWizard } from '@/hooks/use-invoice-wizard';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
 import { clientService } from '@/services/client.service';
 import { Client } from '@/types';
+import { InvoiceWizardReturn } from '@/hooks/use-invoice-wizard';
 
-export function ClientStep() {
-  const { selectedClientId, setSelectedClientId } = useInvoiceWizard();
+export function ClientStep({ wizard }: { wizard: InvoiceWizardReturn }) {
+  const { selectedClientId, setSelectedClientId } = wizard;
   const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {

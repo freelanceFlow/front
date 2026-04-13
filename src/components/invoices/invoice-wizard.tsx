@@ -18,8 +18,8 @@ import { ItemsStep } from '@/app/invoices/steps/items-step';
 import { SummaryStep } from '@/app/invoices/steps/summary-step';
 
 export function InvoiceWizard() {
-  const { step, nextStep, prevStep, saveInvoice, isSubmitting } =
-    useInvoiceWizard();
+  const wizard = useInvoiceWizard();
+  const { step, nextStep, prevStep, saveInvoice, isSubmitting } = wizard;
 
   return (
     <Card className="border-border mx-auto w-full max-w-4xl shadow-lg">
@@ -38,9 +38,9 @@ export function InvoiceWizard() {
       </CardHeader>
 
       <CardContent className="min-h-[400px] pt-8">
-        {step === 1 && <ClientStep />}
-        {step === 2 && <ItemsStep />}
-        {step === 3 && <SummaryStep />}
+        {step === 1 && <ClientStep wizard={wizard} />}
+        {step === 2 && <ItemsStep wizard={wizard} />}
+        {step === 3 && <SummaryStep wizard={wizard} />}
       </CardContent>
 
       <CardFooter className="bg-muted/5 flex justify-between border-t py-6">

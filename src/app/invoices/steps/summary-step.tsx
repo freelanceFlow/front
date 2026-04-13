@@ -1,8 +1,8 @@
-import { useInvoiceWizard } from '@/hooks/use-invoice-wizard';
 import { Separator } from '@/components/ui/separator';
+import { InvoiceWizardReturn } from '@/hooks/use-invoice-wizard';
 
-export function SummaryStep() {
-  const { lines, totals, selectedClientId } = useInvoiceWizard();
+export function SummaryStep({ wizard }: { wizard: InvoiceWizardReturn }) {
+  const { lines, totals, selectedClientId } = wizard;
 
   return (
     <div className="space-y-6">
