@@ -1,65 +1,245 @@
-import Image from 'next/image';
+'use client';
 
-export default function Home() {
+import { useState, useMemo } from 'react';
+import { Invoice, Client } from '@/types';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import {
+  Users,
+  Briefcase,
+  FileText,
+  ArrowRight,
+  TrendingUp,
+  Wallet,
+  Clock,
+} from 'lucide-react';
+import Link from 'next/link';
+
+// 1. Mocks pour les factures (à remplacer par un appel API réel)
+const MOCK_INVOICES: Invoice[] = [
+  {
+    id: 1,
+    user_id: 1,
+    client_id: 1,
+    status: 'paid',
+    total_ht: '1000.00',
+    tva_rate: '20',
+    total_ttc: '1200.00',
+    created_at: '',
+    Client: { name: 'Client A' } as Client,
+  },
+  {
+    id: 2,
+    user_id: 1,
+    client_id: 2,
+    status: 'sent',
+    total_ht: '500.00',
+    tva_rate: '20',
+    total_ttc: '600.00',
+    created_at: '',
+    Client: { name: 'Client B' } as Client,
+  },
+  {
+    id: 3,
+    user_id: 1,
+    client_id: 1,
+    status: 'paid',
+    total_ht: '2000.00',
+    tva_rate: '20',
+    total_ttc: '2400.00',
+    created_at: '',
+    Client: { name: 'Client A' } as Client,
+  },
+  {
+    id: 4,
+    user_id: 1,
+    client_id: 3,
+    status: 'draft',
+    total_ht: '150.00',
+    tva_rate: '20',
+    total_ttc: '1800.00',
+    created_at: '',
+    Client: { name: 'Client C' } as Client,
+  },
+];
+
+export default function DashboardPage() {
+  // On initialise directement avec les mocks pour que le dashboard ne soit pas vide
+  const [invoices] = useState<Invoice[]>(MOCK_INVOICES);
+
+  // 2. Calcul des KPIs en temps réel
+  const stats = useMemo(() => {
+    const paidInvoices = invoices.filter((inv) => inv.status === 'paid');
+    const pendingInvoices = invoices.filter((inv) => inv.status === 'sent');
+
+    const caTotal = paidInvoices.reduce(
+      (acc, inv) => acc + parseFloat(inv.total_ht),
+      0
+    );
+    const totalPending = pendingInvoices.reduce(
+      (acc, inv) => acc + parseFloat(inv.total_ttc),
+      0
+    );
+
+    return {
+      caTotal: caTotal.toFixed(2),
+      totalPending: totalPending.toFixed(2),
+      countPending: pendingInvoices.length,
+      recent: invoices.slice(0, 5),
+    };
+  }, [invoices]);
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex w-full max-w-3xl flex-1 flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl leading-10 font-semibold tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{' '}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{' '}
-            or the{' '}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{' '}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className="space-y-8">
+      <div>
+        <h1 className="font-heading text-foreground text-3xl font-bold">
+          Tableau de bord
+        </h1>
+        <p className="text-muted-foreground">
+          Voici ce qui se passe dans votre activité.
+        </p>
+      </div>
+
+      {/* KPIs Dynamiques */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-border/50 shadow-sm">
+          <CardContent className="flex items-center gap-4 pt-6">
+            <div className="bg-primary/10 text-primary rounded-xl p-3">
+              <TrendingUp size={24} />
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm font-medium">
+                Chiffre d&apos;Affaires HT
+              </p>
+              <h3 className="text-2xl font-bold">{stats.caTotal} €</h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 shadow-sm">
+          <CardContent className="flex items-center gap-4 pt-6">
+            <div className="rounded-xl bg-amber-500/10 p-3 text-amber-600">
+              <Wallet size={24} />
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm font-medium">
+                Encours (TTC)
+              </p>
+              <h3 className="text-2xl font-bold text-amber-600">
+                {stats.totalPending} €
+              </h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 shadow-sm">
+          <CardContent className="flex items-center gap-4 pt-6">
+            <div className="rounded-xl bg-blue-500/10 p-3 text-blue-600">
+              <Clock size={24} />
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm font-medium">
+                Factures en attente
+              </p>
+              <h3 className="text-2xl font-bold text-blue-600">
+                {stats.countPending}
+              </h3>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Navigation Rapide */}
+        <div className="space-y-4 lg:col-span-1">
+          <h2 className="px-1 text-lg font-semibold">Accès rapide</h2>
+          <div className="grid gap-3">
+            <QuickLink
+              href="/invoices"
+              icon={<FileText size={18} />}
+              title="Factures"
+              color="bg-primary"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <QuickLink
+              href="/clients"
+              icon={<Users size={18} />}
+              title="Clients"
+              color="bg-secondary"
+            />
+            <QuickLink
+              href="/services"
+              icon={<Briefcase size={18} />}
+              title="Services"
+              color="bg-accent"
+            />
+          </div>
         </div>
-      </main>
+
+        {/* Dernières Factures */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Dernières factures</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableBody>
+                {stats.recent.map((inv) => (
+                  <TableRow key={inv.id}>
+                    <TableCell className="font-medium">
+                      #INV-00{inv.id}
+                    </TableCell>
+                    <TableCell>
+                      {inv.Client?.name || 'Client inconnu'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          inv.status === 'paid' ? 'default' : 'secondary'
+                        }
+                      >
+                        {inv.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {inv.total_ttc} €
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
+  );
+}
+
+// Petit composant interne pour les liens rapides
+function QuickLink({
+  href,
+  icon,
+  title,
+  color,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  color: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="border-border bg-card hover:bg-muted/50 group flex items-center justify-between rounded-xl border p-4 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <div className={`rounded-lg p-2 text-white ${color}`}>{icon}</div>
+        <span className="font-medium">{title}</span>
+      </div>
+      <ArrowRight
+        size={16}
+        className="text-muted-foreground transition-transform group-hover:translate-x-1"
+      />
+    </Link>
   );
 }
