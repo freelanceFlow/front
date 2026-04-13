@@ -32,11 +32,13 @@ A modern Next.js frontend application for managing freelance business operations
 ## Installation
 
 1. Clone the repository and navigate to the front folder:
+
    ```bash
    cd front
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -81,6 +83,7 @@ npm test
 ## Code Quality
 
 Run code quality checks (recommended order):
+
 ```bash
 npm run lint
 npm run format
@@ -90,21 +93,25 @@ npx prettier . --write
 Individual commands:
 
 Lint code:
+
 ```bash
 npm run lint
 ```
 
 Format code (npm script):
+
 ```bash
 npm run format
 ```
 
 Format code (direct prettier):
+
 ```bash
 npx prettier . --write
 ```
 
 Check formatting:
+
 ```bash
 npx prettier . --check
 # or
@@ -148,4 +155,3 @@ This frontend communicates with a backend API. Make sure the backend server is r
 2. Write tests for new features
 3. Ensure all tests pass before submitting PR
 4. Update documentation as needed
-
