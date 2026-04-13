@@ -57,6 +57,10 @@ export function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
+          onClick={() => {
+            localStorage.clear(); // Nettoie le storage
+            window.location.href = '/login'; // Redirige vers login
+          }}
         >
           <LogOut className="h-4 w-4" />
           Déconnexion
