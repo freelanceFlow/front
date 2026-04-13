@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Invoice } from '@/types';
+import { Invoice, Client, Service } from '@/types';
 import { invoiceService } from '@/services/invoice.service';
+import { clientService } from '@/services/client.service';
+import { serviceService } from '@/services/service.service';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -21,15 +23,21 @@ import Link from 'next/link';
 
 export default function DashboardPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 1. Récupération des données
   useEffect(() => {
-    invoiceService
-      .getAll()
-      .then((res) => {
-        setInvoices(res.data);
+    Promise.all([
+      invoiceService.getAll(),
+      clientService.getAll(),
+      serviceService.getAll(),
+    ])
+      .then(([invoicesRes, clientsRes, servicesRes]) => {
+        setInvoices(invoicesRes.data);
+        setClients(clientsRes.data);
+        setServices(servicesRes.data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -39,7 +47,6 @@ export default function DashboardPage() {
       });
   }, []);
 
-  // 2. Calcul des KPIs
   const stats = useMemo(() => {
     const paidInvoices = invoices.filter((inv) => inv.status === 'paid');
     const pendingInvoices = invoices.filter((inv) => inv.status === 'sent');
@@ -59,9 +66,12 @@ export default function DashboardPage() {
         minimumFractionDigits: 2,
       }),
       countPending: pendingInvoices.length,
+      totalInvoices: invoices.length,
+      totalClients: clients.length,
+      totalServices: services.length,
       recent: invoices.slice(0, 5),
     };
-  }, [invoices]);
+  }, [invoices, clients, services]);
 
   if (error) {
     return (
@@ -84,7 +94,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPIs Dynamiques */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
         <KpiCard
           title="Chiffre d'Affaires HT"
           value={`${stats.caTotal} €`}
@@ -107,6 +117,30 @@ export default function DashboardPage() {
           isLoading={isLoading}
           colorClass="bg-blue-500/10 text-blue-600"
           valueClass="text-blue-600"
+        />
+        <KpiCard
+          title="Total Factures"
+          value={stats.totalInvoices.toString()}
+          icon={<FileText size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-violet-500/10 text-violet-600"
+          valueClass="text-violet-600"
+        />
+        <KpiCard
+          title="Clients"
+          value={stats.totalClients.toString()}
+          icon={<Users size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-emerald-500/10 text-emerald-600"
+          valueClass="text-emerald-600"
+        />
+        <KpiCard
+          title="Prestations"
+          value={stats.totalServices.toString()}
+          icon={<Briefcase size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-rose-500/10 text-rose-600"
+          valueClass="text-rose-600"
         />
       </div>
 
