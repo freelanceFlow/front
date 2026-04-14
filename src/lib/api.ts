@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+// Pour environnement PROD
+// const api = axios.create({
+//   baseURL: '/api/',
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
+// Pour environnement DEV
 const api = axios.create({
-  baseURL: '/api/',
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
