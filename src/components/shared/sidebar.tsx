@@ -9,17 +9,20 @@ import {
   Receipt,
   Briefcase,
   LogOut,
-  X,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 import { MobileHeader } from './mobile-header';
+import { cn } from '@/lib/utils';
+import { storageService } from '@/services/storage.service';
 
 const navigation = [
   { name: 'Dashboard', href: '/homepage', icon: LayoutDashboard },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Prestations', href: '/prestations', icon: Briefcase },
   { name: 'Factures', href: '/invoices', icon: Receipt },
+  { name: 'Mon Profil', href: '/profile', icon: User },
 ];
 
 function SidebarContent({ pathname }: { pathname: string }) {
@@ -58,8 +61,8 @@ function SidebarContent({ pathname }: { pathname: string }) {
           variant="ghost"
           className="w-full justify-start gap-3 text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
           onClick={() => {
-            localStorage.clear();
-            window.location.href = '/login';
+            storageService.clear(); // Nettoie le storage
+            window.location.href = '/login'; // Redirige vers login
           }}
         >
           <LogOut className="h-4 w-4" />

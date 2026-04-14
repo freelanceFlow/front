@@ -7,6 +7,7 @@ export interface User {
   last_name: string;
   adress?: string;
   created_at: string;
+  logo_url?: string;
 }
 
 export interface AuthResponse {
