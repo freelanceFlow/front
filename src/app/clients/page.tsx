@@ -23,6 +23,8 @@ import {
   MapPin,
   AlertCircle,
   Download,
+  X,
+  CheckCircle,
 } from 'lucide-react';
 import {
   Dialog,
@@ -35,6 +37,42 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+// Composant Toast simple
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const colors = {
+    success: 'bg-green-50 text-green-800 border-green-200',
+    error: 'bg-red-50 text-red-800 border-red-200',
+  };
+
+  const icons = {
+    success: <CheckCircle className="h-4 w-4" />,
+    error: <AlertCircle className="h-4 w-4" />,
+  };
+
+  return (
+    <div className="animate-in slide-in-from-right-5 fade-in fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-lg border px-4 py-3 shadow-lg duration-300">
+      <div className={colors[type]}>{icons[type]}</div>
+      <span className="text-sm">{message}</span>
+      <button onClick={onClose} className="ml-2">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +83,22 @@ export default function ClientsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // State pour les erreurs de validation et toast
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
+  // Validation email
+  const validateEmail = (email: string): string | null => {
+    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+    if (!email) return "L'email est requis";
+    if (!emailRegex.test(email))
+      return "Format d'email invalide (ex: nom@domaine.com)";
+    return null;
+  };
 
   // 1. Chargement initial
   const fetchClients = () => {
@@ -66,25 +120,44 @@ export default function ClientsPage() {
   // 2. Handlers API
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
+
     const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+
+    // Validation email
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setValidationError(emailError);
+      setToast({ message: emailError, type: 'error' });
+      return;
+    }
+
+    setValidationError(null);
+    setIsSubmitting(true);
+
     const clientData = {
       name: formData.get('name') as string,
-      email: formData.get('email') as string,
+      email: email,
       company: formData.get('company') as string,
-      address: formData.get('address') as string,
+      address_line1: formData.get('address_line1') as string,
+      address_line2: formData.get('address_line2') as string,
+      zip_code: formData.get('zip_code') as string,
+      city: formData.get('city') as string,
+      country: formData.get('country') as string,
     };
 
     try {
       if (selectedClient) {
         await clientService.update(selectedClient.id, clientData);
+        setToast({ message: 'Client modifié avec succès', type: 'success' });
       } else {
         await clientService.create(clientData);
+        setToast({ message: 'Client créé avec succès', type: 'success' });
       }
       setIsFormOpen(false);
-      fetchClients(); // Rafraîchir la liste
+      fetchClients();
     } catch {
-      alert("Erreur lors de l'enregistrement");
+      setToast({ message: "Erreur lors de l'enregistrement", type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -95,10 +168,11 @@ export default function ClientsPage() {
     setIsSubmitting(true);
     try {
       await clientService.delete(selectedClient.id);
+      setToast({ message: 'Client supprimé avec succès', type: 'success' });
       setIsDeleteOpen(false);
       fetchClients();
     } catch {
-      alert('Erreur lors de la suppression');
+      setToast({ message: 'Erreur lors de la suppression', type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +182,6 @@ export default function ClientsPage() {
   const handleExportCSV = async () => {
     try {
       const response = await clientService.exportCSV();
-      // Création d'un lien temporaire pour déclencher le téléchargement
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -116,21 +189,24 @@ export default function ClientsPage() {
       link.download = `clients-export-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
-      link.remove(); // On nettoie le DOM
+      link.remove();
       window.URL.revokeObjectURL(url);
+      setToast({ message: 'Export réussi', type: 'success' });
     } catch {
-      alert("Erreur lors de l'exportation des données.");
+      setToast({ message: "Erreur lors de l'exportation", type: 'error' });
     }
   };
 
   // Handlers Ouvertures Modales
   const handleOpenCreate = () => {
     setSelectedClient(null);
+    setValidationError(null);
     setIsFormOpen(true);
   };
 
   const handleOpenEdit = (client: Client) => {
     setSelectedClient(client);
+    setValidationError(null);
     setIsFormOpen(true);
   };
 
@@ -249,8 +325,26 @@ export default function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-muted-foreground flex items-center gap-1 text-sm">
-                        <MapPin size={12} /> {client.address || 'N/A'}
+                      <div className="text-muted-foreground text-sm">
+                        <div className="flex items-center gap-1">
+                          <MapPin size={12} />
+                          <span>{client.address_line1 || 'N/A'}</span>
+                        </div>
+                        {client.address_line2 && (
+                          <div className="ml-5 text-xs">
+                            {client.address_line2}
+                          </div>
+                        )}
+                        <div className="ml-5 text-xs">
+                          {client.zip_code && client.city && (
+                            <span>
+                              {client.zip_code} {client.city}
+                            </span>
+                          )}
+                          {client.country && (
+                            <span className="ml-1">- {client.country}</span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="pr-6 text-right">
@@ -283,7 +377,7 @@ export default function ClientsPage() {
 
       {/* 1. Modale de Création / Édition */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
@@ -303,6 +397,7 @@ export default function ClientsPage() {
                   required
                 />
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -310,23 +405,73 @@ export default function ClientsPage() {
                   name="email"
                   type="email"
                   defaultValue={selectedClient?.email}
-                  required
+                  className={validationError ? 'border-red-500' : ''}
                 />
+                {validationError && (
+                  <p className="text-sm text-red-500">{validationError}</p>
+                )}
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="company">Entreprise</Label>
+                <Label htmlFor="company">Entreprise (Optionnel)</Label>
                 <Input
                   id="company"
                   name="company"
                   defaultValue={selectedClient?.company}
                 />
               </div>
+
+              {/* Champs d'adresse complets */}
               <div className="grid gap-2">
-                <Label htmlFor="address">Adresse</Label>
+                <Label htmlFor="address_line1">Adresse ligne 1</Label>
                 <Input
-                  id="address"
-                  name="address"
-                  defaultValue={selectedClient?.address}
+                  id="address_line1"
+                  name="address_line1"
+                  defaultValue={selectedClient?.address_line1}
+                  required
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="address_line2">
+                  Adresse ligne 2 (Optionnel)
+                </Label>
+                <Input
+                  id="address_line2"
+                  name="address_line2"
+                  defaultValue={selectedClient?.address_line2}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="zip_code">Code postal</Label>
+                  <Input
+                    id="zip_code"
+                    name="zip_code"
+                    defaultValue={selectedClient?.zip_code}
+                    required
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="city">Ville</Label>
+                  <Input
+                    id="city"
+                    name="city"
+                    defaultValue={selectedClient?.city}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="country">Pays</Label>
+                <Input
+                  id="country"
+                  name="country"
+                  defaultValue={selectedClient?.country}
+                  required
                 />
               </div>
             </div>
@@ -372,6 +517,15 @@ export default function ClientsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
