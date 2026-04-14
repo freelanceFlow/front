@@ -55,13 +55,18 @@ export default function InvoicesPage() {
     const nextStatus = STATUS_ORDER[nextIndex];
 
     try {
+      // Préparation des données à envoyer
+      const updateData: Partial<Invoice> = { status: nextStatus };
+
+      // LOGIQUE : Si on passe à 'sent', on définit la date d'émission
+      if (nextStatus === 'sent') {
+        updateData.issued_at = new Date().toISOString();
+      }
       // On met à jour le statut sur le serveur
-      await invoiceService.update(id, { status: nextStatus });
+      await invoiceService.update(id, updateData);
       // On met à jour l'état local pour un feedback instantané
       setInvoices((prev) =>
-        prev.map((inv) =>
-          inv.id === id ? { ...inv, status: nextStatus } : inv
-        )
+        prev.map((inv) => (inv.id === id ? { ...inv, ...updateData } : inv))
       );
     } catch {
       alert('Erreur lors du changement de statut.');
