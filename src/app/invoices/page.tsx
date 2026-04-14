@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileDown, Filter, RefreshCw, Plus, AlertCircle } from 'lucide-react';
+import { FileDown, RefreshCw, Plus, AlertCircle, Download } from 'lucide-react';
 
 const STATUS_ORDER = ['draft', 'sent', 'paid', 'cancelled'] as const;
 
@@ -89,6 +89,24 @@ export default function InvoicesPage() {
     }
   };
 
+  // 4. Export CSV
+  const handleExportCSV = async () => {
+    try {
+      const response = await invoiceService.exportCSV();
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `factures-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert("Erreur lors de l'exportation des factures.");
+    }
+  };
+
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'paid':
@@ -126,8 +144,12 @@ export default function InvoicesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon">
-            <Filter size={18} />
+          <Button
+            variant="outline"
+            onClick={handleExportCSV}
+            className="border-primary/20 hover:bg-primary/5 text-primary gap-2"
+          >
+            <Download size={18} /> Exporter CSV
           </Button>
           <Button
             className="gap-2 shadow-sm"
