@@ -8,34 +8,45 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Camera, Save, Loader2 } from 'lucide-react';
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading, refreshUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
+
+  // Étape 1 : On met à jour la structure du formulaire
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     email: '',
-    adress: '',
+    address_line1: '',
+    address_line2: '',
+    zip_code: '',
+    city: '',
+    country: '',
   });
 
+  // Étape 2 : On mappe les nouveaux champs depuis l'objet user
   useEffect(() => {
-    if (user && !authLoading) {
-      setFormData((prev) => ({
-        ...prev,
+    if (user) {
+      setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         email: user.email || '',
-        adress: user.adress || '',
-      }));
+        address_line1: user.address_line1 || '',
+        address_line2: user.address_line2 || '',
+        zip_code: user.zip_code || '',
+        city: user.city || '',
+        country: user.country || '',
+      });
     }
-  }, [user, authLoading]);
+  }, [user]); // On simplifie la dépendance
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +55,16 @@ export default function ProfilePage() {
       const { data } = await authService.updateMe(formData);
       storageService.setUser(data);
       refreshUser();
-      alert('Profil mis à jour !');
-    } catch {
-      alert('Erreur lors de la mise à jour');
+      toast.success('Profil mis à jour !');
+    } catch (error: unknown) {
+      // On vérifie si l'erreur vient d'Axios pour extraire le message sans utiliser "any"
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response: { data: { message: string } } }).response
+              ?.data?.message
+          : 'Erreur lors de la mise à jour';
+
+      toast.error(errorMessage);
     } finally {
       setIsUpdating(false);
     }
@@ -56,85 +74,32 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Validation du Format
     if (!ALLOWED_TYPES.includes(file.type)) {
-      alert('Format non supporté. Utilisez JPG, PNG ou SVG.');
+      toast.error('Format non supporté. Utilisez JPG, PNG ou SVG.');
       return;
     }
 
-    // 2. Validation de la Taille
     if (file.size > MAX_FILE_SIZE) {
-      alert('Le fichier est trop lourd. Maximum 2MB autorisé.');
+      toast.error('Le fichier est trop lourd. Maximum 2MB autorisé.');
       return;
     }
 
     setLogoLoading(true);
     try {
       const { data } = await authService.uploadLogo(file);
-
-      // On met à jour l'utilisateur dans le stockage local pour refléter le changement
       if (user) {
-        storageService.setUser({ ...user, logo_url: data.logo_url });
+        storageService.setUser({ ...user, logo_data: data.logo_data });
       }
-
-      alert('Logo mis à jour avec succès !');
+      toast.success('Logo mis à jour avec succès !');
       window.location.reload();
     } catch {
-      alert("Erreur lors de l'upload du logo sur le serveur.");
+      toast.error("Erreur lors de l'upload du logo sur le serveur.");
     } finally {
       setLogoLoading(false);
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="mx-auto max-w-4xl space-y-6 p-4">
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card className="md:col-span-1">
-            <CardHeader>
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-6 py-8">
-              <Skeleton className="h-40 w-40 rounded-xl" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <Skeleton className="h-4 w-32" />
-            </CardHeader>
-            <CardContent className="space-y-6 py-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <Skeleton className="h-10 w-40" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  if (authLoading) return <ProfileSkeleton />;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
@@ -148,19 +113,19 @@ export default function ProfilePage() {
       </header>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {/* SECTION LOGO */}
+        {/* SECTION LOGO (Identique) */}
         <Card className="border-border/50 shadow-sm md:col-span-1">
           <CardHeader className="bg-muted/20 border-b py-4">
             <CardTitle className="text-sm font-semibold tracking-wider uppercase">
-              Logo de l&apos;entreprise
+              Logo
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-6 py-8">
             <div className="group border-border bg-muted/30 hover:border-primary/50 relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition-colors">
-              {user?.logo_url ? (
+              {user?.logo_data ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={user.logo_url}
+                  src={user.logo_data}
                   alt="Logo"
                   className="h-full w-full object-contain p-2"
                 />
@@ -170,21 +135,19 @@ export default function ProfilePage() {
                   <span className="text-xs">Aucun logo</span>
                 </div>
               )}
-
               {logoLoading && (
                 <div className="bg-background/60 absolute inset-0 flex items-center justify-center backdrop-blur-sm">
                   <Loader2 className="text-primary animate-spin" size={24} />
                 </div>
               )}
             </div>
-
             <div className="w-full space-y-3">
               <Label
                 htmlFor="logo-upload"
                 className={`bg-primary text-primary-foreground flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 ${logoLoading ? 'pointer-events-none opacity-50' : ''}`}
               >
                 <Camera size={16} />
-                {user?.logo_url ? 'Changer le logo' : 'Ajouter un logo'}
+                {user?.logo_data ? 'Changer' : 'Ajouter'}
               </Label>
               <Input
                 id="logo-upload"
@@ -194,37 +157,24 @@ export default function ProfilePage() {
                 onChange={handleLogoUpload}
                 disabled={logoLoading}
               />
-              <div className="rounded-lg bg-blue-500/5 p-3 text-center">
-                <p className="text-muted-foreground text-[11px] leading-relaxed">
-                  Formats :{' '}
-                  <strong className="text-foreground">PNG, JPG, SVG</strong>
-                  <br />
-                  Poids max : <strong className="text-foreground">2 Mo</strong>
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* SECTION INFOS */}
+        {/* SECTION INFOS (Mise à jour) */}
         <Card className="border-border/50 shadow-sm md:col-span-2">
           <CardHeader className="bg-muted/20 border-b py-4">
             <CardTitle className="text-sm font-semibold tracking-wider uppercase">
               Détails du compte
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-6">
-            <form
-              key={user?.id || 'loading'}
-              onSubmit={handleUpdateProfile}
-              className="space-y-6"
-            >
+          <CardContent>
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="first_name">Prénom</Label>
                   <Input
                     id="first_name"
-                    placeholder="Ex: Clément"
                     value={formData.first_name}
                     onChange={(e) =>
                       setFormData({ ...formData, first_name: e.target.value })
@@ -236,7 +186,6 @@ export default function ProfilePage() {
                   <Label htmlFor="last_name">Nom</Label>
                   <Input
                     id="last_name"
-                    placeholder="Ex: Martin"
                     value={formData.last_name}
                     onChange={(e) =>
                       setFormData({ ...formData, last_name: e.target.value })
@@ -247,35 +196,94 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  Email{' '}
-                  <span className="text-muted-foreground text-[10px] uppercase">
-                    (Non modifiable)
-                  </span>
-                </Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   value={formData.email}
                   disabled
-                  className="bg-muted/50 cursor-not-allowed"
+                  className="bg-muted/50"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="adress">Adresse professionnelle</Label>
-                <Input
-                  id="adress"
-                  placeholder="123 Rue de la Paix, 75000 Paris"
-                  value={formData.adress}
-                  onChange={(e) =>
-                    setFormData({ ...formData, adress: e.target.value })
-                  }
-                />
+              {/* BLOC ADRESSE COMPLET */}
+              <div className="border-border/40 space-y-4 border-t pt-4">
+                <h3 className="text-muted-foreground text-sm font-semibold uppercase">
+                  Adresse
+                </h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address_line1">Ligne 1 (N°, Rue)</Label>
+                  <Input
+                    id="address_line1"
+                    placeholder="123 Rue de la Paix"
+                    value={formData.address_line1}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address_line1: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address_line2">
+                    Ligne 2 (Appartement, Étage...)
+                  </Label>
+                  <Input
+                    id="address_line2"
+                    placeholder="Bâtiment B, Étage 3"
+                    value={formData.address_line2}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address_line2: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="zip_code">Code Postal</Label>
+                    <Input
+                      id="zip_code"
+                      placeholder="75000"
+                      value={formData.zip_code}
+                      onChange={(e) =>
+                        setFormData({ ...formData, zip_code: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Ville</Label>
+                    <Input
+                      id="city"
+                      placeholder="Paris"
+                      value={formData.city}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="country">Pays</Label>
+                  <Input
+                    id="country"
+                    placeholder="France"
+                    value={formData.country}
+                    onChange={(e) =>
+                      setFormData({ ...formData, country: e.target.value })
+                    }
+                  />
+                </div>
               </div>
 
               <Button
                 type="submit"
-                className="w-full gap-2 shadow-sm sm:w-auto"
+                className="w-full gap-2 sm:w-auto"
                 disabled={isUpdating}
               >
                 {isUpdating ? (
@@ -283,9 +291,37 @@ export default function ProfilePage() {
                 ) : (
                   <Save size={18} />
                 )}
-                Sauvegarder les changements
+                Sauvegarder
               </Button>
             </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Extraction du Skeleton pour plus de clarté
+function ProfileSkeleton() {
+  return (
+    <div className="mx-auto max-w-4xl space-y-6 p-4">
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Card className="md:col-span-1">
+          <CardContent className="flex flex-col items-center gap-6 py-8">
+            <Skeleton className="h-40 w-40 rounded-xl" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-2">
+          <CardContent className="space-y-6 py-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-10 w-40" />
           </CardContent>
         </Card>
       </div>

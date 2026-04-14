@@ -19,12 +19,12 @@ export const authService = {
 
   getMe: () => api.get<User>('/auth/me'),
 
-  updateMe: (data: Partial<User>) => api.patch<User>('/auth/me', data),
+  updateMe: (data: Partial<User>) => api.put<User>('/auth/me', data),
 
   uploadLogo: (file: File) => {
     const formData = new FormData();
     formData.append('logo', file);
-    return api.post<{ logo_url: string }>('/auth/logo', formData, {
+    return api.post<{ logo_data: string }>('/auth/logo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
