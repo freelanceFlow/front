@@ -22,6 +22,7 @@ import {
   Mail,
   MapPin,
   AlertCircle,
+  Download,
 } from 'lucide-react';
 import {
   Dialog,
@@ -103,6 +104,25 @@ export default function ClientsPage() {
     }
   };
 
+  // 3. Handler pour l'export CSV
+  const handleExportCSV = async () => {
+    try {
+      const response = await clientService.exportCSV();
+      // Création d'un lien temporaire pour déclencher le téléchargement
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `clients-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove(); // On nettoie le DOM
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert("Erreur lors de l'exportation des données.");
+    }
+  };
+
   // Handlers Ouvertures Modales
   const handleOpenCreate = () => {
     setSelectedClient(null);
@@ -140,9 +160,18 @@ export default function ClientsPage() {
           </h1>
           <p className="text-muted-foreground">Gérez votre base de contacts.</p>
         </div>
-        <Button onClick={handleOpenCreate} className="gap-2 shadow-sm">
-          <Plus size={18} /> Nouveau Client
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleExportCSV}
+            className="border-primary/20 hover:bg-primary/5 text-primary gap-2"
+          >
+            <Download size={18} /> Exporter CSV
+          </Button>
+          <Button onClick={handleOpenCreate} className="gap-2 shadow-sm">
+            <Plus size={18} /> Nouveau Client
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border/50 overflow-hidden shadow-sm">

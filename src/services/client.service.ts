@@ -12,4 +12,6 @@ export const clientService = {
     api.put<Client>(`/clients/${id}`, data),
 
   delete: (id: number) => api.delete(`/clients/${id}`),
+
+  exportCSV: () => api.get('/clients/export', { responseType: 'blob' }),
 };
