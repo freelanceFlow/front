@@ -159,13 +159,13 @@ export default function DashboardPage() {
               href="/clients"
               icon={<Users size={18} />}
               title="Clients"
-              color="bg-secondary"
+              color="bg-primary"
             />
             <QuickLink
               href="/prestations"
               icon={<Briefcase size={18} />}
               title="Prestations"
-              color="bg-accent"
+              color="bg-primary"
             />
           </div>
         </div>
