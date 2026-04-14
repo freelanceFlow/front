@@ -8,15 +8,18 @@ import {
   Receipt,
   Briefcase,
   LogOut,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { storageService } from '@/services/storage.service';
 
 const navigation = [
   { name: 'Dashboard', href: '/homepage', icon: LayoutDashboard },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Prestations', href: '/prestations', icon: Briefcase },
   { name: 'Factures', href: '/invoices', icon: Receipt },
+  { name: 'Mon Profil', href: '/profile', icon: User },
 ];
 
 export function Sidebar() {
@@ -58,7 +61,7 @@ export function Sidebar() {
           variant="ghost"
           className="w-full justify-start gap-3 text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
           onClick={() => {
-            localStorage.clear(); // Nettoie le storage
+            storageService.clear(); // Nettoie le storage
             window.location.href = '/login'; // Redirige vers login
           }}
         >
