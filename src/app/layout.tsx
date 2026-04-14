@@ -22,6 +22,7 @@ export default function RootLayout({
 }>) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -30,7 +31,15 @@ export default function RootLayout({
       setIsLoading(false);
     };
 
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
     checkAuth();
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+
+    return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
   if (isLoading) {
@@ -63,7 +72,8 @@ export default function RootLayout({
           className={cn(
             'flex-1 overflow-y-auto',
             !isAuthenticated && 'w-full',
-            isAuthenticated && 'p-10'
+            isAuthenticated && !isMobile && 'p-10',
+            isAuthenticated && isMobile && 'px-4 pt-20 pb-4'
           )}
         >
           <div className="mx-auto max-w-7xl">{children}</div>
