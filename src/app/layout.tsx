@@ -60,7 +60,11 @@ export default function RootLayout({
       >
         {isAuthenticated && <Sidebar />}
         <main
-          className={cn('flex-1 overflow-y-auto', !isAuthenticated && 'w-full')}
+          className={cn(
+            'flex-1 overflow-y-auto p-10',
+            !isAuthenticated && 'w-full',
+            isAuthenticated && 'p-10'
+          )}
         >
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
