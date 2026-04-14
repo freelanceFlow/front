@@ -19,7 +19,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl">FREEL</CardTitle>
+          <CardTitle className="text-3xl font-bold tracking-tight">
+            FreelanceFlow
+          </CardTitle>
           <CardDescription>Log in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent>
