@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import {
   Users,
   Briefcase,
@@ -94,7 +95,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPIs Dynamiques */}
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <KpiCard
           title="Chiffre d'Affaires HT"
           value={`${stats.caTotal} €`}
@@ -255,15 +256,22 @@ function KpiCard({
   valueClass?: string;
 }) {
   return (
-    <Card className="border-border/50 shadow-sm">
-      <CardContent className="flex items-center gap-4 pt-6">
-        <div className={`rounded-xl p-3 ${colorClass}`}>{icon}</div>
-        <div className="flex-1">
+    <Card
+      className={cn(
+        'border-border/50 shadow-sm',
+        'aspect-square md:aspect-auto'
+      )}
+    >
+      <CardContent className="flex h-full flex-col items-center justify-center pt-6 md:flex-row md:justify-start md:gap-4">
+        <div className={cn('mb-3 rounded-xl p-4', 'md:mb-0 md:p-3')}>
+          <div className={colorClass}>{icon}</div>
+        </div>
+        <div className="text-center md:text-left">
           <p className="text-muted-foreground text-sm font-medium">{title}</p>
           {isLoading ? (
-            <Skeleton className="mt-1 h-8 w-24" />
+            <Skeleton className="mx-auto mt-1 h-8 w-24 md:mx-0" />
           ) : (
-            <h3 className={`text-2xl font-bold ${valueClass}`}>{value}</h3>
+            <h3 className={cn('text-2xl font-bold', valueClass)}>{value}</h3>
           )}
         </div>
       </CardContent>
