@@ -12,6 +12,8 @@ import {
   User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { MobileHeader } from './mobile-header';
 import { cn } from '@/lib/utils';
 import { storageService } from '@/services/storage.service';
 
