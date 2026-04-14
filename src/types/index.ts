@@ -21,7 +21,11 @@ export interface Client {
   name: string;
   email: string;
   company?: string;
-  address?: string;
+  address_line1: string;
+  address_line2?: string;
+  zip_code: string;
+  city: string;
+  country: string;
   created_at: string;
 }
 
