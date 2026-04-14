@@ -10,4 +10,5 @@ export const invoiceService = {
   delete: (id: number) => api.delete(`/invoices/${id}`),
   generatePDF: (id: number) =>
     api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
+  exportCSV: () => api.get('/invoices/export', { responseType: 'blob' }),
 };
