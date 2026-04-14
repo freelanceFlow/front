@@ -216,7 +216,7 @@ export default function ServicesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="pr-6 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="0 flex justify-end gap-1">
                         <Button
                           onClick={() => handleOpenEdit(service)}
                           variant="ghost"
