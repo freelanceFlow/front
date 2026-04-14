@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Sidebar } from '@/components/shared/sidebar';
 import { DM_Sans, JetBrains_Mono } from 'next/font/google';
 import { useEffect, useState } from 'react';
+import { Toaster } from 'sonner';
 
 const fontSans = DM_Sans({
   subsets: ['latin'],
@@ -78,6 +79,8 @@ export default function RootLayout({
         >
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
+
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

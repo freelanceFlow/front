@@ -5,9 +5,13 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  adress?: string;
+  address_line1?: string;
+  address_line2?: string;
+  zip_code?: string;
+  city?: string;
+  country?: string;
   created_at: string;
-  logo_url?: string;
+  logo_data?: string;
 }
 
 export interface AuthResponse {
