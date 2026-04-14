@@ -16,9 +16,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileDown, RefreshCw, Plus, AlertCircle, Download } from 'lucide-react';
-
-const STATUS_ORDER = ['draft', 'sent', 'paid', 'cancelled'] as const;
+import { toast } from 'sonner';
+import {
+  FileDown,
+  Plus,
+  AlertCircle,
+  Download,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 
 export default function InvoicesPage() {
   const router = useRouter();
@@ -46,34 +52,7 @@ export default function InvoicesPage() {
     loadData();
   }, []);
 
-  // 2. Cycle de statut RÉEL (Appel API)
-  const cycleStatus = async (id: number, currentStatus: string) => {
-    const currentIndex = STATUS_ORDER.indexOf(
-      currentStatus as (typeof STATUS_ORDER)[number]
-    );
-    const nextIndex = (currentIndex + 1) % STATUS_ORDER.length;
-    const nextStatus = STATUS_ORDER[nextIndex];
-
-    try {
-      // Préparation des données à envoyer
-      const updateData: Partial<Invoice> = { status: nextStatus };
-
-      // LOGIQUE : Si on passe à 'sent', on définit la date d'émission
-      if (nextStatus === 'sent') {
-        updateData.issued_at = new Date().toISOString();
-      }
-      // On met à jour le statut sur le serveur
-      await invoiceService.update(id, updateData);
-      // On met à jour l'état local pour un feedback instantané
-      setInvoices((prev) =>
-        prev.map((inv) => (inv.id === id ? { ...inv, ...updateData } : inv))
-      );
-    } catch {
-      alert('Erreur lors du changement de statut.');
-    }
-  };
-
-  // 3. Téléchargement PDF
+  // 2. Téléchargement PDF
   const downloadPdf = async (id: number) => {
     try {
       const response = await invoiceService.generatePDF(id);
@@ -85,11 +64,36 @@ export default function InvoicesPage() {
       link.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      alert('Erreur lors de la génération du PDF.');
+      toast.error('Erreur lors de la génération du PDF.');
     }
   };
 
-  // 4. Export CSV
+  // 3. Changement de statut (cycle : draft -> sent -> paid -> cancelled -> draft)
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      case 'sent':
+        return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'cancelled':
+        return 'bg-destructive/10 text-destructive border-destructive/20';
+      default:
+        return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
+    }
+  };
+
+  // 4. Suppression d'une facture
+  const handleDelete = async (id: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')) return;
+    try {
+      await invoiceService.delete(id); // Assure-toi que cette méthode existe dans ton service
+      setInvoices(invoices.filter((inv) => inv.id !== id));
+    } catch {
+      toast.error('Erreur lors de la suppression.');
+    }
+  };
+
+  // 5. Export CSV
   const handleExportCSV = async () => {
     try {
       const response = await invoiceService.exportCSV();
@@ -103,20 +107,7 @@ export default function InvoicesPage() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      alert("Erreur lors de l'exportation des factures.");
-    }
-  };
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-      case 'sent':
-        return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'cancelled':
-        return 'bg-destructive/10 text-destructive border-destructive/20';
-      default:
-        return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
+      toast.error("Erreur lors de l'exportation des factures.");
     }
   };
 
@@ -234,35 +225,46 @@ export default function InvoicesPage() {
                       {inv.Client?.name || 'Inconnu'}
                     </TableCell>
                     <TableCell className="text-center">
-                      <button
-                        onClick={() => cycleStatus(inv.id, inv.status)}
-                        className="inline-block transition-transform active:scale-95"
+                      <Badge
+                        variant="outline"
+                        className={`${getStatusStyle(inv.status)} px-3 py-1 capitalize`}
                       >
-                        <Badge
-                          variant="outline"
-                          className={`${getStatusStyle(inv.status)} flex cursor-pointer items-center gap-1.5 px-3 py-1 capitalize hover:brightness-95`}
-                        >
-                          <RefreshCw
-                            size={10}
-                            className="transition-transform group-hover:rotate-180"
-                          />
-                          {inv.status}
-                        </Badge>
-                      </button>
+                        {inv.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-semibold">
                       {parseFloat(inv.total_ttc).toFixed(2)} €
                     </TableCell>
                     <TableCell className="pr-6 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-primary/20 hover:border-primary hover:bg-primary/5 text-primary h-8 gap-2 transition-all"
-                        onClick={() => downloadPdf(inv.id)}
-                      >
-                        <FileDown size={14} />
-                        PDF
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-primary h-8 w-8"
+                          onClick={() =>
+                            router.push(`/invoices/${inv.id}/edit`)
+                          } // Redirection edit
+                        >
+                          <Pencil size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive h-8 w-8"
+                          onClick={() => handleDelete(inv.id)}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-primary/20 hover:border-primary hover:bg-primary/5 text-primary h-8 gap-2 transition-all"
+                          onClick={() => downloadPdf(inv.id)}
+                        >
+                          <FileDown size={14} />
+                          PDF
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
