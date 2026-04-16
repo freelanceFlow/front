@@ -160,7 +160,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-center justify-between min-[450px]:flex-row max-[450px]:items-start gap-4n">
         <div>
           <h1 className="font-heading text-foreground text-3xl font-bold">
             Factures
@@ -169,7 +169,7 @@ export default function InvoicesPage() {
             Suivez vos paiements et gérez vos PDF.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3 max-[500px]:flex-col max-[450px]:items-start">
           <Button
             variant="outline"
             onClick={handleExportCSV}

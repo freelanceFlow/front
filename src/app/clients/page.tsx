@@ -229,14 +229,14 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-center justify-between min-[400px]:flex-row max-[450px]:items-start gap-4">
         <div>
           <h1 className="font-heading text-foreground text-3xl font-bold">
             Clients
           </h1>
           <p className="text-muted-foreground">Gérez votre base de contacts.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 max-[480px]:flex-col max-[450px]:items-start max-[450px]:mt-2">
           <Button
             variant="outline"
             onClick={handleExportCSV}

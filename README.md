@@ -58,7 +58,7 @@ Start the development server:
 npm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3000) to view the application.
+Open [http://localhost:3001](http://localhost:3001) to view the application.
 
 ## Building for Production
 

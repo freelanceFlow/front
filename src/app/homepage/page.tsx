@@ -262,8 +262,8 @@ function KpiCard({
         'aspect-square md:aspect-auto'
       )}
     >
-      <CardContent className="flex h-full flex-col items-center justify-center pt-6 md:flex-row md:justify-start md:gap-4">
-        <div className={cn('mb-3 rounded-xl p-4', 'md:mb-0 md:p-3')}>
+      <CardContent className="flex h-full flex-col items-center justify-center md:flex-row md:justify-start md:gap-4">
+        <div className={cn('hidden min-[350px]:block mb-3 rounded-xl p-4', 'md:mb-0 md:p-3')}>
           <div className={colorClass}>{icon}</div>
         </div>
         <div className="text-center md:text-left">
@@ -271,7 +271,7 @@ function KpiCard({
           {isLoading ? (
             <Skeleton className="mx-auto mt-1 h-8 w-24 md:mx-0" />
           ) : (
-            <h3 className={cn('text-2xl font-bold', valueClass)}>{value}</h3>
+            <h3 className={cn('lg:text-2xl min-[450px]:text-xl font-bold', valueClass)}>{value}</h3>
           )}
         </div>
       </CardContent>
