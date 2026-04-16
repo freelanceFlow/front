@@ -16,7 +16,6 @@ const api = axios.create({
 //  },
 // });
 
-
 // Intercepteur pour injecter le token JWT
 api.interceptors.request.use(
   (config) => {
