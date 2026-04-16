@@ -126,6 +126,12 @@ export default function InvoicesPage() {
     const toastId = toast.loading('Envoi de la facture au client...');
 
     try {
+      // On met à jour le statut de la facture avant d'envoyer l'email
+      await invoiceService.update(id, {
+        status: 'sent',
+        issued_at: new Date().toISOString(),
+      });
+
       await invoiceService.sendEmail(id);
       toast.success('La facture a été envoyée avec succès !', { id: toastId });
       // Optionnel : rafraîchir les données si le statut passe à 'sent' côté back
