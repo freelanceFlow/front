@@ -75,12 +75,18 @@ export default function EditInvoicePage() {
     fetchData();
   }, [id, router]);
 
-  const totalTTC = useMemo(() => {
-    return invoiceData.prestations.reduce((acc, p) => {
+  const totals = useMemo(() => {
+    const ht = invoiceData.prestations.reduce((acc, p) => {
       const q = Number(p.quantity) || 0;
       const up = Number(p.unit_price) || 0;
       return acc + q * up;
     }, 0);
+    const tva = ht * 0.2;
+    return {
+      ht: ht.toFixed(2),
+      tva: tva.toFixed(2),
+      ttc: (ht + tva).toFixed(2),
+    };
   }, [invoiceData.prestations]);
 
   const addPrestation = () => {
@@ -128,20 +134,20 @@ export default function EditInvoicePage() {
       const payload = {
         client_id: Number(invoiceData.client_id),
         status: invoiceData.status,
-        total_ttc: totalTTC.toString(),
-        total_ht: totalTTC.toString(),
-        tva_rate: '0',
+        total_ht: totals.ht,
+        tva_rate: '20',
+        total_ttc: totals.ttc,
         InvoiceLines: invoiceData.prestations.map((p) => ({
           service_id: Number(p.service_id),
           quantity: p.quantity,
           unit_price: p.unit_price,
-          total: (Number(p.quantity) * Number(p.unit_price)).toString(),
+          total: (Number(p.quantity) * Number(p.unit_price)).toFixed(2),
         })),
         lines: invoiceData.prestations.map((p) => ({
           service_id: Number(p.service_id),
           quantity: p.quantity,
           unit_price: p.unit_price,
-          total: (Number(p.quantity) * Number(p.unit_price)).toString(),
+          total: (Number(p.quantity) * Number(p.unit_price)).toFixed(2),
         })),
       };
 
@@ -327,7 +333,7 @@ export default function EditInvoicePage() {
                   <span className="text-muted-foreground text-sm uppercase">
                     Total TTC
                   </span>
-                  <span className="text-primary">{totalTTC.toFixed(2)} €</span>
+                  <span className="text-primary">{totals.ttc} €</span>
                 </div>
               </div>
 

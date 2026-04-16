@@ -2,20 +2,20 @@ import axios from 'axios';
 import { storageService } from '@/services/storage.service';
 
 // Pour environnement PROD
-const api = axios.create({
+/* const api = axios.create({
   baseURL: '/api/',
   headers: {
     'Content-Type': 'application/json',
   },
-});
+}); */
 
 // Pour environnement DEV
-// const api = axios.create({
-//   baseURL: process.env.NEXT_PUBLIC_API_URL,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 // Intercepteur pour injecter le token JWT
 api.interceptors.request.use(
