@@ -11,4 +11,5 @@ export const invoiceService = {
   generatePDF: (id: number) =>
     api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
   exportCSV: () => api.get('/invoices/export', { responseType: 'blob' }),
+  sendEmail: (id: number) => api.post(`/invoices/${id}/send`),
 };

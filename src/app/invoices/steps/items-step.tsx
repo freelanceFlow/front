@@ -47,7 +47,7 @@ export function ItemsStep() {
           <TableHeader className="bg-muted/50">
             <TableRow>
               <TableHead className="w-[45%]">Service / Désignation</TableHead>
-              <TableHead className="w-[15%]">Quantité</TableHead>
+              <TableHead className="w-[15%]">Nombre d&apos;heures</TableHead>
               <TableHead className="w-[15%]">Prix Unitaire</TableHead>
               <TableHead className="w-[20%] text-right">Total HT</TableHead>
               <TableHead className="w-[5%]"></TableHead>
