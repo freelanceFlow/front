@@ -24,6 +24,8 @@ import {
   Download,
   Pencil,
   Trash2,
+  Mail,
+  Loader2,
 } from 'lucide-react';
 
 export default function InvoicesPage() {
@@ -31,6 +33,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState<number | null>(null);
 
   // 1. Récupération des factures
   const fetchInvoices = () => {
@@ -108,6 +111,32 @@ export default function InvoicesPage() {
       window.URL.revokeObjectURL(url);
     } catch {
       toast.error("Erreur lors de l'exportation des factures.");
+    }
+  };
+
+  // 6. Envoi de la facture par email
+  const handleSendEmail = async (id: number) => {
+    setIsSendingEmail(id);
+    const toastId = toast.loading('Envoi de la facture au client...');
+
+    try {
+      await invoiceService.sendEmail(id);
+      toast.success('La facture a été envoyée avec succès !', { id: toastId });
+      // Optionnel : rafraîchir les données si le statut passe à 'sent' côté back
+      fetchInvoices();
+    } catch (error: unknown) {
+      let message = "Erreur lors de l'envoi de l'email.";
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response: { data: { message?: string } };
+        };
+        message = axiosError.response?.data?.message || message;
+      }
+
+      toast.error(message, { id: toastId });
+    } finally {
+      setIsSendingEmail(null);
     }
   };
 
@@ -238,6 +267,21 @@ export default function InvoicesPage() {
                     <TableCell className="pr-6 text-right">
                       <div className="flex justify-end gap-2">
                         <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-2 border-blue-500/20 text-blue-600 transition-all hover:border-blue-500 hover:bg-blue-500/5"
+                          onClick={() => handleSendEmail(inv.id)}
+                          disabled={isSendingEmail === inv.id}
+                        >
+                          {isSendingEmail === inv.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Mail size={14} />
+                          )}
+                          Mail
+                        </Button>
+
+                        <Button
                           variant="ghost"
                           size="icon"
                           className="text-muted-foreground hover:text-primary h-8 w-8"
@@ -247,6 +291,7 @@ export default function InvoicesPage() {
                         >
                           <Pencil size={14} />
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -255,6 +300,7 @@ export default function InvoicesPage() {
                         >
                           <Trash2 size={14} />
                         </Button>
+
                         <Button
                           variant="outline"
                           size="sm"
