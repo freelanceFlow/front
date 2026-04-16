@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { storageService } from '@/services/storage.service'; 
-
+import { storageService } from '@/services/storage.service';
 
 // Pour environnement PROD
 const api = axios.create({
