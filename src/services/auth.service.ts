@@ -10,8 +10,22 @@ export const authService = {
     password: string;
     first_name: string;
     last_name: string;
-    adress?: string;
+    address_line1: string;
+    address_line2?: string;
+    zip_code: string;
+    city: string;
+    country: string;
   }) => api.post<User>('/auth/register', data),
 
   getMe: () => api.get<User>('/auth/me'),
+
+  updateMe: (data: Partial<User>) => api.put<User>('/auth/me', data),
+
+  uploadLogo: (file: File) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return api.post<{ logo_data: string }>('/auth/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

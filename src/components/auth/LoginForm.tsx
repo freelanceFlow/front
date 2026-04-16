@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+// Supprimer l'import de useRouter
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,7 +24,6 @@ interface ErrorResponse {
 }
 
 export function LoginForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +50,7 @@ export function LoginForm() {
         if (response.data.user) {
           storageService.setUser(response.data.user);
         }
-        router.push('/homepage');
-        router.refresh();
+        window.location.href = '/homepage';
       }
     } catch (err: unknown) {
       const error = err as AxiosError<ErrorResponse>;

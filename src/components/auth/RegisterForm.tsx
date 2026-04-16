@@ -17,7 +17,11 @@ const registerSchema = z
     first_name: z.string().min(2, 'First name must be at least 2 characters'),
     last_name: z.string().min(2, 'Last name must be at least 2 characters'),
     email: z.string().email('Invalid email address'),
-    adress: z.string().optional(),
+    address_line1: z.string().min(5, 'Address line 1 is required'),
+    address_line2: z.string().optional(),
+    zip_code: z.string().min(4, 'Zip code must be at least 4 characters'),
+    city: z.string().min(2, 'City must be at least 2 characters'),
+    country: z.string().min(2, 'Country must be at least 2 characters'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(6, 'Please confirm your password'),
   })
@@ -44,7 +48,7 @@ export function RegisterForm() {
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      adress: '',
+      address_line2: '',
     },
   });
 
@@ -137,17 +141,82 @@ export function RegisterForm() {
         )}
       </div>
 
+      {/* Adresse */}
       <div className="space-y-2">
-        <Label htmlFor="adress">Address (Optional)</Label>
+        <Label htmlFor="address_line1">Address Line 1</Label>
         <Input
-          {...register('adress')}
+          {...register('address_line1')}
           type="text"
-          id="adress"
-          placeholder="123 Main St, City, Country"
+          id="address_line1"
+          placeholder="123 Main Street"
           disabled={isLoading}
         />
-        {errors.adress && (
-          <p className="text-destructive text-sm">{errors.adress.message}</p>
+        {errors.address_line1 && (
+          <p className="text-destructive text-sm">
+            {errors.address_line1.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="address_line2">Address Line 2 (Optional)</Label>
+        <Input
+          {...register('address_line2')}
+          type="text"
+          id="address_line2"
+          placeholder="Apartment, Suite, etc."
+          disabled={isLoading}
+        />
+        {errors.address_line2 && (
+          <p className="text-destructive text-sm">
+            {errors.address_line2.message}
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="zip_code">Zip Code</Label>
+          <Input
+            {...register('zip_code')}
+            type="text"
+            id="zip_code"
+            placeholder="75001"
+            disabled={isLoading}
+          />
+          {errors.zip_code && (
+            <p className="text-destructive text-sm">
+              {errors.zip_code.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="city">City</Label>
+          <Input
+            {...register('city')}
+            type="text"
+            id="city"
+            placeholder="Paris"
+            disabled={isLoading}
+          />
+          {errors.city && (
+            <p className="text-destructive text-sm">{errors.city.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="country">Country</Label>
+        <Input
+          {...register('country')}
+          type="text"
+          id="country"
+          placeholder="France"
+          disabled={isLoading}
+        />
+        {errors.country && (
+          <p className="text-destructive text-sm">{errors.country.message}</p>
         )}
       </div>
 

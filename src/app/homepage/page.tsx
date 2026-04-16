@@ -1,10 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Invoice, Client } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
+import { Invoice, Client, Service } from '@/types';
+import { invoiceService } from '@/services/invoice.service';
+import { clientService } from '@/services/client.service';
+import { serviceService } from '@/services/service.service';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import {
   Users,
   Briefcase,
@@ -13,82 +18,70 @@ import {
   TrendingUp,
   Wallet,
   Clock,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
-// 1. Mocks pour les factures (à remplacer par un appel API réel)
-const MOCK_INVOICES: Invoice[] = [
-  {
-    id: 1,
-    user_id: 1,
-    client_id: 1,
-    status: 'paid',
-    total_ht: '1000.00',
-    tva_rate: '20',
-    total_ttc: '1200.00',
-    created_at: '',
-    Client: { name: 'Client A' } as Client,
-  },
-  {
-    id: 2,
-    user_id: 1,
-    client_id: 2,
-    status: 'sent',
-    total_ht: '500.00',
-    tva_rate: '20',
-    total_ttc: '600.00',
-    created_at: '',
-    Client: { name: 'Client B' } as Client,
-  },
-  {
-    id: 3,
-    user_id: 1,
-    client_id: 1,
-    status: 'paid',
-    total_ht: '2000.00',
-    tva_rate: '20',
-    total_ttc: '2400.00',
-    created_at: '',
-    Client: { name: 'Client A' } as Client,
-  },
-  {
-    id: 4,
-    user_id: 1,
-    client_id: 3,
-    status: 'draft',
-    total_ht: '150.00',
-    tva_rate: '20',
-    total_ttc: '1800.00',
-    created_at: '',
-    Client: { name: 'Client C' } as Client,
-  },
-];
-
 export default function DashboardPage() {
-  // On initialise directement avec les mocks pour que le dashboard ne soit pas vide
-  const [invoices] = useState<Invoice[]>(MOCK_INVOICES);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 2. Calcul des KPIs en temps réel
+  useEffect(() => {
+    Promise.all([
+      invoiceService.getAll(),
+      clientService.getAll(),
+      serviceService.getAll(),
+    ])
+      .then(([invoicesRes, clientsRes, servicesRes]) => {
+        setInvoices(invoicesRes.data);
+        setClients(clientsRes.data);
+        setServices(servicesRes.data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Erreur dashboard:', err);
+        setError('Impossible de charger les données.');
+        setIsLoading(false);
+      });
+  }, []);
+
   const stats = useMemo(() => {
     const paidInvoices = invoices.filter((inv) => inv.status === 'paid');
     const pendingInvoices = invoices.filter((inv) => inv.status === 'sent');
 
     const caTotal = paidInvoices.reduce(
-      (acc, inv) => acc + parseFloat(inv.total_ht),
+      (acc, inv) => acc + parseFloat(inv.total_ht || '0'),
       0
     );
     const totalPending = pendingInvoices.reduce(
-      (acc, inv) => acc + parseFloat(inv.total_ttc),
+      (acc, inv) => acc + parseFloat(inv.total_ttc || '0'),
       0
     );
 
     return {
-      caTotal: caTotal.toFixed(2),
-      totalPending: totalPending.toFixed(2),
+      caTotal: caTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2 }),
+      totalPending: totalPending.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+      }),
       countPending: pendingInvoices.length,
+      totalInvoices: invoices.length,
+      totalClients: clients.length,
+      totalServices: services.length,
       recent: invoices.slice(0, 5),
     };
-  }, [invoices]);
+  }, [invoices, clients, services]);
+
+  if (error) {
+    return (
+      <div className="text-destructive flex h-[50vh] flex-col items-center justify-center gap-2">
+        <AlertCircle size={40} />
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -102,52 +95,54 @@ export default function DashboardPage() {
       </div>
 
       {/* KPIs Dynamiques */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="bg-primary/10 text-primary rounded-xl p-3">
-              <TrendingUp size={24} />
-            </div>
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">
-                Chiffre d&apos;Affaires HT
-              </p>
-              <h3 className="text-2xl font-bold">{stats.caTotal} €</h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-xl bg-amber-500/10 p-3 text-amber-600">
-              <Wallet size={24} />
-            </div>
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">
-                Encours (TTC)
-              </p>
-              <h3 className="text-2xl font-bold text-amber-600">
-                {stats.totalPending} €
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-xl bg-blue-500/10 p-3 text-blue-600">
-              <Clock size={24} />
-            </div>
-            <div>
-              <p className="text-muted-foreground text-sm font-medium">
-                Factures en attente
-              </p>
-              <h3 className="text-2xl font-bold text-blue-600">
-                {stats.countPending}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <KpiCard
+          title="Chiffre d'Affaires HT"
+          value={`${stats.caTotal} €`}
+          icon={<TrendingUp size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-primary/10 text-primary"
+        />
+        <KpiCard
+          title="Encours (TTC)"
+          value={`${stats.totalPending} €`}
+          icon={<Wallet size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-amber-500/10 text-amber-600"
+          valueClass="text-amber-600"
+        />
+        <KpiCard
+          title="Factures en attente"
+          value={stats.countPending.toString()}
+          icon={<Clock size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-blue-500/10 text-blue-600"
+          valueClass="text-blue-600"
+        />
+        <KpiCard
+          title="Total Factures"
+          value={stats.totalInvoices.toString()}
+          icon={<FileText size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-violet-500/10 text-violet-600"
+          valueClass="text-violet-600"
+        />
+        <KpiCard
+          title="Clients"
+          value={stats.totalClients.toString()}
+          icon={<Users size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-emerald-500/10 text-emerald-600"
+          valueClass="text-emerald-600"
+        />
+        <KpiCard
+          title="Prestations"
+          value={stats.totalServices.toString()}
+          icon={<Briefcase size={24} />}
+          isLoading={isLoading}
+          colorClass="bg-rose-500/10 text-rose-600"
+          valueClass="text-rose-600"
+        />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -165,13 +160,13 @@ export default function DashboardPage() {
               href="/clients"
               icon={<Users size={18} />}
               title="Clients"
-              color="bg-secondary"
+              color="bg-primary"
             />
             <QuickLink
               href="/prestations"
               icon={<Briefcase size={18} />}
               title="Prestations"
-              color="bg-accent"
+              color="bg-primary"
             />
           </div>
         </div>
@@ -184,28 +179,57 @@ export default function DashboardPage() {
           <CardContent>
             <Table>
               <TableBody>
-                {stats.recent.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium">
-                      #INV-00{inv.id}
-                    </TableCell>
-                    <TableCell>
-                      {inv.Client?.name || 'Client inconnu'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          inv.status === 'paid' ? 'default' : 'secondary'
-                        }
-                      >
-                        {inv.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {inv.total_ttc} €
+                {isLoading ? (
+                  [...Array(3)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton className="h-5 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="ml-auto h-5 w-16" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : stats.recent.length > 0 ? (
+                  stats.recent.map((inv) => (
+                    <TableRow key={inv.id}>
+                      <TableCell className="font-mono text-xs font-bold">
+                        #INV-{inv.id.toString().padStart(3, '0')}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {inv.Client?.name || 'Client inconnu'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            inv.status === 'paid' ? 'default' : 'secondary'
+                          }
+                          className="capitalize"
+                        >
+                          {inv.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-bold">
+                        {inv.total_ttc} €
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-muted-foreground py-8 text-center italic"
+                    >
+                      Aucune facture pour le moment.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -215,7 +239,46 @@ export default function DashboardPage() {
   );
 }
 
-// Petit composant interne pour les liens rapides
+// Composant interne pour les KPIs avec Skeleton intégré
+function KpiCard({
+  title,
+  value,
+  icon,
+  isLoading,
+  colorClass,
+  valueClass = '',
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  isLoading: boolean;
+  colorClass: string;
+  valueClass?: string;
+}) {
+  return (
+    <Card
+      className={cn(
+        'border-border/50 shadow-sm',
+        'aspect-square md:aspect-auto'
+      )}
+    >
+      <CardContent className="flex h-full flex-col items-center justify-center pt-6 md:flex-row md:justify-start md:gap-4">
+        <div className={cn('mb-3 rounded-xl p-4', 'md:mb-0 md:p-3')}>
+          <div className={colorClass}>{icon}</div>
+        </div>
+        <div className="text-center md:text-left">
+          <p className="text-muted-foreground text-sm font-medium">{title}</p>
+          {isLoading ? (
+            <Skeleton className="mx-auto mt-1 h-8 w-24 md:mx-0" />
+          ) : (
+            <h3 className={cn('text-2xl font-bold', valueClass)}>{value}</h3>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function QuickLink({
   href,
   icon,

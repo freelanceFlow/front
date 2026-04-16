@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { storageService } from '@/services/storage.service'; // Importation de ton service
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -10,7 +11,8 @@ const api = axios.create({
 // Intercepteur pour injecter le token JWT
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Utilise ton service plutôt que localStorage en direct pour rester cohérent
+    const token = storageService.getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,13 +23,19 @@ api.interceptors.request.use(
   }
 );
 
-// Intercepteur pour gérer les erreurs globales (ex: 401 Unauthorized)
+// Intercepteur pour gérer les erreurs globales
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Optionnel : Rediriger vers login ou vider le localStorage
-      console.error('Session expirée ou non autorisée');
+      // 1. On vide le localStorage ET les cookies via ton service
+      storageService.clear();
+
+      // 2. On force la redirection vers le login
+      // On vérifie qu'on est bien côté navigateur pour éviter les crashs SSR
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

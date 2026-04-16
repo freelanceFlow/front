@@ -5,8 +5,13 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  adress?: string;
+  address_line1?: string;
+  address_line2?: string;
+  zip_code?: string;
+  city?: string;
+  country?: string;
   created_at: string;
+  logo_data?: string;
 }
 
 export interface AuthResponse {
@@ -20,7 +25,11 @@ export interface Client {
   name: string;
   email: string;
   company?: string;
-  address?: string;
+  address_line1: string;
+  address_line2?: string;
+  zip_code: string;
+  city: string;
+  country: string;
   created_at: string;
 }
 
@@ -53,4 +62,5 @@ export interface Invoice {
   created_at: string;
   Client?: Client;
   InvoiceLines?: InvoiceLine[];
+  lines?: Partial<InvoiceLine>[];
 }

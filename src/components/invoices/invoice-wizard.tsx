@@ -1,6 +1,10 @@
 'use client';
 
-import { useInvoiceWizard } from '@/hooks/use-invoice-wizard';
+import {
+  useInvoiceWizardProvider,
+  InvoiceWizardContext,
+  useInvoiceWizard,
+} from '@/hooks/use-invoice-wizard';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,6 +22,16 @@ import { ItemsStep } from '@/app/invoices/steps/items-step';
 import { SummaryStep } from '@/app/invoices/steps/summary-step';
 
 export function InvoiceWizard() {
+  const wizard = useInvoiceWizardProvider();
+
+  return (
+    <InvoiceWizardContext.Provider value={wizard}>
+      <InvoiceWizardContent />
+    </InvoiceWizardContext.Provider>
+  );
+}
+
+function InvoiceWizardContent() {
   const { step, nextStep, prevStep, saveInvoice, isSubmitting } =
     useInvoiceWizard();
 

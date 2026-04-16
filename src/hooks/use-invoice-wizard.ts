@@ -1,8 +1,30 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, createContext, useContext } from 'react';
 import { Service, InvoiceLine } from '@/types';
+import { invoiceService } from '@/services/invoice.service';
 import { useRouter } from 'next/navigation';
 
-export function useInvoiceWizard() {
+interface InvoiceWizardState {
+  step: number;
+  nextStep: () => void;
+  prevStep: () => void;
+  selectedClientId: number | null;
+  setSelectedClientId: (id: number | null) => void;
+  lines: Partial<InvoiceLine>[];
+  addLine: (service?: Service) => void;
+  updateLine: (
+    index: number,
+    field: keyof InvoiceLine,
+    value: string | number
+  ) => void;
+  removeLine: (index: number) => void;
+  totals: { ht: number; tva: number; ttc: number };
+  isSubmitting: boolean;
+  saveInvoice: () => Promise<void>;
+}
+
+const InvoiceWizardContext = createContext<InvoiceWizardState | null>(null);
+
+export function useInvoiceWizardProvider() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,15 +49,17 @@ export function useInvoiceWizard() {
     field: keyof InvoiceLine,
     value: string | number
   ) => {
-    const newLines = [...lines];
-    newLines[index] = { ...newLines[index], [field]: value };
+    setLines((prev) => {
+      const newLines = [...prev];
+      newLines[index] = { ...newLines[index], [field]: value };
 
-    if (field === 'quantity' || field === 'unit_price') {
-      const qte = parseFloat(newLines[index].quantity?.toString() || '0');
-      const price = parseFloat(newLines[index].unit_price?.toString() || '0');
-      newLines[index].total = (qte * price).toFixed(2);
-    }
-    setLines(newLines);
+      if (field === 'quantity' || field === 'unit_price') {
+        const qte = parseFloat(newLines[index].quantity?.toString() || '0');
+        const price = parseFloat(newLines[index].unit_price?.toString() || '0');
+        newLines[index].total = (qte * price).toFixed(2);
+      }
+      return newLines;
+    });
   };
 
   const totals = useMemo(() => {
@@ -50,25 +74,20 @@ export function useInvoiceWizard() {
   const saveInvoice = async () => {
     setIsSubmitting(true);
 
-    // Simulation du JSON final à envoyer au backend
-    const payload = {
-      client_id: selectedClientId,
-      date: new Date().toISOString(),
-      status: 'draft',
-      lines: lines,
-      totals: {
+    try {
+      await invoiceService.create({
+        client_id: selectedClientId!,
+        status: 'draft',
         total_ht: totals.ht.toFixed(2),
-        tva_amount: totals.tva.toFixed(2),
+        tva_rate: '20',
         total_ttc: totals.ttc.toFixed(2),
-      },
-    };
-
-    console.log('Envoi au backend :', payload);
-
-    setTimeout(() => {
+        lines: lines as InvoiceLine[],
+      });
+      router.push('/invoices');
+    } catch (err) {
+      console.error('Erreur lors de la création de la facture:', err);
       setIsSubmitting(false);
-      router.push('/invoices'); // Retour au dashboard après succès
-    }, 1500);
+    }
   };
 
   return {
@@ -86,4 +105,16 @@ export function useInvoiceWizard() {
     isSubmitting,
     saveInvoice,
   };
+}
+
+export { InvoiceWizardContext };
+
+export function useInvoiceWizard() {
+  const context = useContext(InvoiceWizardContext);
+  if (!context) {
+    throw new Error(
+      'useInvoiceWizard must be used within an InvoiceWizardProvider'
+    );
+  }
+  return context;
 }
