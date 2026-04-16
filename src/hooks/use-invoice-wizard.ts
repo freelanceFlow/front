@@ -20,6 +20,7 @@ interface InvoiceWizardState {
   totals: { ht: number; tva: number; ttc: number };
   isSubmitting: boolean;
   saveInvoice: () => Promise<void>;
+  saveAndSendInvoice: () => Promise<void>;
 }
 
 const InvoiceWizardContext = createContext<InvoiceWizardState | null>(null);
@@ -90,6 +91,32 @@ export function useInvoiceWizardProvider() {
     }
   };
 
+  const saveAndSendInvoice = async () => {
+    setIsSubmitting(true);
+    try {
+      // Étape A : Créer la facture
+      const res = await invoiceService.create({
+        client_id: selectedClientId!,
+        status: 'sent',
+        total_ht: totals.ht.toFixed(2),
+        tva_rate: '20',
+        total_ttc: totals.ttc.toFixed(2),
+        issued_at: new Date().toISOString(),
+        lines: lines as InvoiceLine[],
+      });
+
+      const newInvoiceId = res.data.id;
+
+      // Étape B : Envoyer l'email
+      await invoiceService.sendEmail(newInvoiceId);
+
+      router.push('/invoices');
+    } catch (err) {
+      console.error('Erreur lors de la création et l’envoi:', err);
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     step,
     nextStep,
@@ -104,6 +131,7 @@ export function useInvoiceWizardProvider() {
     totals,
     isSubmitting,
     saveInvoice,
+    saveAndSendInvoice,
   };
 }
 
