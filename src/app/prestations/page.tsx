@@ -132,7 +132,7 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center justify-between min-[400px]:flex-row max-[450px]:items-start gap-4n">
+      <div className="gap-4n flex flex-col items-center justify-between max-[450px]:items-start min-[400px]:flex-row">
         <div>
           <h1 className="font-heading text-foreground text-3xl font-bold">
             Prestations
@@ -141,7 +141,10 @@ export default function ServicesPage() {
             Gérez votre catalogue et vos tarifs.
           </p>
         </div>
-        <Button onClick={handleOpenCreate} className="gap-2 shadow-sm max-[400px]:mt-2">
+        <Button
+          onClick={handleOpenCreate}
+          className="gap-2 shadow-sm max-[400px]:mt-2"
+        >
           <Plus size={18} /> Nouvelle Prestation
         </Button>
       </div>

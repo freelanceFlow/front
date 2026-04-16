@@ -160,7 +160,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center justify-between min-[450px]:flex-row max-[450px]:items-start gap-4n">
+      <div className="gap-4n flex flex-col items-center justify-between max-[450px]:items-start min-[450px]:flex-row">
         <div>
           <h1 className="font-heading text-foreground text-3xl font-bold">
             Factures
