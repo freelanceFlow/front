@@ -1,17 +1,26 @@
 import axios from 'axios';
-import { storageService } from '@/services/storage.service'; // Importation de ton service
+import { storageService } from '@/services/storage.service'; 
 
+
+// Pour environnement PROD
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: '/api/',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Pour environnement DEV
+// const api = axios.create({
+//   baseURL: process.env.NEXT_PUBLIC_API_URL,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
 // Intercepteur pour injecter le token JWT
 api.interceptors.request.use(
   (config) => {
-    // Utilise ton service plutôt que localStorage en direct pour rester cohérent
     const token = storageService.getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
