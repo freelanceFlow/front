@@ -126,6 +126,13 @@ export default function InvoicesPage() {
     const toastId = toast.loading('Envoi de la facture au client...');
 
     try {
+      // On met à jour le statut de la facture avant d'envoyer l'email
+      await invoiceService.update(id, {
+        status: 'sent',
+        issued_at: new Date().toISOString(),
+      });
+
+
       await invoiceService.sendEmail(id);
       toast.success('La facture a été envoyée avec succès !', { id: toastId });
       // Optionnel : rafraîchir les données si le statut passe à 'sent' côté back
@@ -160,7 +167,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="gap-4n flex flex-col items-center justify-between max-[450px]:items-start min-[450px]:flex-row">
         <div>
           <h1 className="font-heading text-foreground text-3xl font-bold">
             Factures
@@ -169,7 +176,7 @@ export default function InvoicesPage() {
             Suivez vos paiements et gérez vos PDF.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3 max-[500px]:flex-col max-[450px]:items-start">
           <Button
             variant="outline"
             onClick={handleExportCSV}

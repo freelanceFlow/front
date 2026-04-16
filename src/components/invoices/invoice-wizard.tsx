@@ -14,7 +14,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Loader2, Mail } from 'lucide-react';
 
 // Import des sous-composants
 import { ClientStep } from '@/app/invoices/steps/client-step';
@@ -32,8 +32,14 @@ export function InvoiceWizard() {
 }
 
 function InvoiceWizardContent() {
-  const { step, nextStep, prevStep, saveInvoice, isSubmitting } =
-    useInvoiceWizard();
+  const {
+    step,
+    nextStep,
+    prevStep,
+    saveInvoice,
+    saveAndSendInvoice,
+    isSubmitting,
+  } = useInvoiceWizard();
 
   return (
     <Card className="border-border mx-auto w-full max-w-4xl shadow-lg">
@@ -66,20 +72,38 @@ function InvoiceWizardContent() {
           <ChevronLeft className="mr-2 h-4 w-4" /> Précédent
         </Button>
 
-        {step < 3 ? (
-          <Button onClick={nextStep}>
-            Suivant <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
-          <Button
-            onClick={saveInvoice}
-            disabled={isSubmitting}
-            className="bg-emerald-600 text-white hover:bg-emerald-700"
-          >
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer la facture'}
-            <Save className="ml-2 h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex gap-3">
+          {step < 3 ? (
+            <Button onClick={nextStep}>
+              Suivant <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={saveInvoice}
+                disabled={isSubmitting}
+                className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+              >
+                {isSubmitting ? '...' : 'Brouillon'}
+                <Save className="ml-2 h-4 w-4" />
+              </Button>
+
+              <Button
+                onClick={saveAndSendInvoice}
+                disabled={isSubmitting}
+                className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+                Enregistrer et envoyer
+              </Button>
+            </>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

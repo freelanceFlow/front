@@ -75,12 +75,18 @@ export default function EditInvoicePage() {
     fetchData();
   }, [id, router]);
 
-  const totalTTC = useMemo(() => {
-    return invoiceData.prestations.reduce((acc, p) => {
+  const totals = useMemo(() => {
+    const ht = invoiceData.prestations.reduce((acc, p) => {
       const q = Number(p.quantity) || 0;
       const up = Number(p.unit_price) || 0;
       return acc + q * up;
     }, 0);
+    const tva = ht * 0.2;
+    return {
+      ht: ht.toFixed(2),
+      tva: tva.toFixed(2),
+      ttc: (ht + tva).toFixed(2),
+    };
   }, [invoiceData.prestations]);
 
   const addPrestation = () => {
@@ -125,32 +131,26 @@ export default function EditInvoicePage() {
 
   const handleUpdate = async () => {
     try {
-      const payload = {
+      const payload: Partial<Invoice> = {
         client_id: Number(invoiceData.client_id),
         status: invoiceData.status,
-        total_ttc: totalTTC.toString(),
-        total_ht: totalTTC.toString(),
-        tva_rate: '0',
-        InvoiceLines: invoiceData.prestations.map((p) => ({
-          service_id: Number(p.service_id),
-          quantity: p.quantity,
-          unit_price: p.unit_price,
-          total: (Number(p.quantity) * Number(p.unit_price)).toString(),
-        })),
+        total_ht: totals.ht,
+        tva_rate: '20',
+        total_ttc: totals.ttc,
         lines: invoiceData.prestations.map((p) => ({
           service_id: Number(p.service_id),
           quantity: p.quantity,
           unit_price: p.unit_price,
-          total: (Number(p.quantity) * Number(p.unit_price)).toString(),
+          total: (Number(p.quantity) * Number(p.unit_price)).toFixed(2),
         })),
       };
 
-      // On passe par 'unknown' avant de caster vers le type attendu.
-      // Cela évite l'erreur 'no-explicit-any' tout en réglant le conflit de structure.
-      await invoiceService.update(
-        Number(id),
-        payload as unknown as Partial<Invoice>
-      );
+      // Si le statut est passé à 'sent', on ajoute la date d'émission
+      if (invoiceData.status === 'sent') {
+        payload.issued_at = new Date().toISOString();
+      }
+
+      await invoiceService.update(Number(id), payload);
 
       toast.success('Facture mise à jour avec succès');
       router.push('/invoices');
@@ -327,7 +327,7 @@ export default function EditInvoicePage() {
                   <span className="text-muted-foreground text-sm uppercase">
                     Total TTC
                   </span>
-                  <span className="text-primary">{totalTTC.toFixed(2)} €</span>
+                  <span className="text-primary">{totals.ttc} €</span>
                 </div>
               </div>
 
