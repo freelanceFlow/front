@@ -71,18 +71,24 @@ export default function InvoicesPage() {
     }
   };
 
-  // 3. Changement de statut (cycle : draft -> sent -> paid -> cancelled -> draft)
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-      case 'sent':
-        return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'cancelled':
-        return 'bg-destructive/10 text-destructive border-destructive/20';
-      default:
-        return 'bg-slate-500/10 text-slate-600 border-slate-500/20';
-    }
+  // 3. Affichage du statut avec styles conditionnels
+  const STATUS_LABELS: Record<string, { label: string; style: string }> = {
+    draft: {
+      label: 'Brouillon',
+      style: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+    },
+    sent: {
+      label: 'Envoyée',
+      style: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    },
+    paid: {
+      label: 'Payée',
+      style: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    },
+    cancelled: {
+      label: 'Annulée',
+      style: 'bg-destructive/10 text-destructive border-destructive/20',
+    },
   };
 
   // 4. Suppression d'une facture
@@ -256,9 +262,9 @@ export default function InvoicesPage() {
                     <TableCell className="text-center">
                       <Badge
                         variant="outline"
-                        className={`${getStatusStyle(inv.status)} px-3 py-1 capitalize`}
+                        className={`${STATUS_LABELS[inv.status]?.style || STATUS_LABELS.draft.style} px-3 py-1`}
                       >
-                        {inv.status}
+                        {STATUS_LABELS[inv.status]?.label || inv.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-semibold">
