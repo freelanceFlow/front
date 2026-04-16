@@ -131,18 +131,12 @@ export default function EditInvoicePage() {
 
   const handleUpdate = async () => {
     try {
-      const payload = {
+      const payload: Partial<Invoice> = {
         client_id: Number(invoiceData.client_id),
         status: invoiceData.status,
         total_ht: totals.ht,
         tva_rate: '20',
         total_ttc: totals.ttc,
-        InvoiceLines: invoiceData.prestations.map((p) => ({
-          service_id: Number(p.service_id),
-          quantity: p.quantity,
-          unit_price: p.unit_price,
-          total: (Number(p.quantity) * Number(p.unit_price)).toFixed(2),
-        })),
         lines: invoiceData.prestations.map((p) => ({
           service_id: Number(p.service_id),
           quantity: p.quantity,
@@ -151,12 +145,12 @@ export default function EditInvoicePage() {
         })),
       };
 
-      // On passe par 'unknown' avant de caster vers le type attendu.
-      // Cela évite l'erreur 'no-explicit-any' tout en réglant le conflit de structure.
-      await invoiceService.update(
-        Number(id),
-        payload as unknown as Partial<Invoice>
-      );
+      // Si le statut est passé à 'sent', on ajoute la date d'émission
+      if (invoiceData.status === 'sent') {
+        payload.issued_at = new Date().toISOString();
+      }
+
+      await invoiceService.update(Number(id), payload);
 
       toast.success('Facture mise à jour avec succès');
       router.push('/invoices');
